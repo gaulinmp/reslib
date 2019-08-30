@@ -1,0 +1,17 @@
+############# Normal requirements.txt ############
+-r requirements.txt
+
+############## Not version specific ##############
+tqdm
+ipyparallel
+notebook
+sqlite
+sas7bdat
+
+############## Version specific ##############
+
+############## Github Imports ################
+-e git://github.com/gaulinmp/pyedgar.git#egg=pyedgar
+# pip install git+https://github.com/gaulinmp/pyedgar.git#egg=pyedgar
+
+############## Suggested ####################
