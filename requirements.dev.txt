@@ -5,7 +5,6 @@
 tqdm
 ipyparallel
 notebook
-sqlite
 sas7bdat
 
 ############## Version specific ##############
