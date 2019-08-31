@@ -1,4 +1,6 @@
-"""ResLib (Research Library) is a python based package to facilitate the basic
+# -*- coding: utf-8 -*-
+"""
+ResLib (Research Library) is a python based package to facilitate the basic
 functionality useful for a research project in Python.
 """
 
@@ -12,15 +14,15 @@ try:
 except ImportError:
     from distutils.core import setup
 
-_dir = lambda x: os.path.join(os.path.abspath(os.path.dirname(__file__)), x)
+_dir = lambda *x: os.path.join(os.path.abspath(os.path.dirname(__file__)), *x)
 
 # Get the long description from the README file
-with open(_dir('README.md'), 'utf-8') as f:
+with open(_dir('README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 # Get the version information from __version__.py
 version = {}
-with open(_dir('reslib', '__version__.py'), 'r', 'utf-8') as f:
+with open(_dir('reslib', '__version__.py'), 'r', encoding='utf-8') as f:
     exec(f.read(), version)
 
 setup(
