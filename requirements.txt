@@ -1,11 +1,11 @@
 ############## Not version specific ##############
-seaborn
+# seaborn
 
 ############## Version specific ##############
 pandas>=0.22.0
 
 ############## Github Imports ################
--e git://github.com/gaulinmp/pyedgar.git#egg=pyedgar
+# -e git://github.com/gaulinmp/pyedgar.git#egg=pyedgar
 # pip install git+https://github.com/gaulinmp/pyedgar.git#egg=pyedgar
 -e git://github.com/pydoit/doit.git#egg=doit
 # pip install git+https://github.com/pydoit/doit.git#egg=doit

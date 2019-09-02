@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
-********************************
+*************************************
 reslib.data.sources.wrds.compustat
-********************************
+*************************************
 
 This module contains code to download Compustat data.
 
