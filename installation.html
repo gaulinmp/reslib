@@ -35,44 +35,50 @@
   <div class="section" id="installation-of-reslib">
 <span id="installation"></span><h1>Installation of ResLib<a class="headerlink" href="#installation-of-reslib" title="Permalink to this headline">¶</a></h1>
 <p>This part of the documentation covers the installation of ResLib.
-The first step to using any software package is getting it properly installed.</p>
-<div class="section" id="install-python">
-<h2>Install Python<a class="headerlink" href="#install-python" title="Permalink to this headline">¶</a></h2>
-<p>If you don’t have <a class="reference external" href="https://www.python.org">Python</a> installed (today’s
-the day!), I strongly recommend using
-<a class="reference external" href="https://docs.conda.io/en/latest/miniconda.html">miniconda</a>.
-Once you have Python installed (congrats!) I suggest using conda environments:</p>
-<blockquote>
-<div><p>$ conda create -n reslib</p>
-</div></blockquote>
-<p>This will create an environment named <cite>reslib</cite>, which is now empty, and ready
-to be filled with wonderful python packages.
-So let’s fill it with the packages that will help you do amazing research in
-a snap.</p>
+The first step to using any software package is getting it properly installed.
+If you don’t have Python already, start with <a class="reference external" href="#step-0-install-python">Step 0</a>
+at the bottom, then continue on with the pip install.</p>
+<div class="section" id="pip-install">
+<h2>$ pip install<a class="headerlink" href="#pip-install" title="Permalink to this headline">¶</a></h2>
+<p>Sorry, ResLib isn’t on <a class="reference external" href="https://pypi.org/">Pypi</a> yet, but probably one day.
+For now, use the installation from github method below.</p>
 </div>
-<div class="section" id="pip-install-from-source">
-<h2>$ pip install from source<a class="headerlink" href="#pip-install-from-source" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="pip-install-from-github">
+<h2>$ pip install from github<a class="headerlink" href="#pip-install-from-github" title="Permalink to this headline">¶</a></h2>
 <p>To install ResLib, simply run this simple command in your terminal of choice:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ [if conda env named reslib exists:] conda activate reslib
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="o">[</span><span class="k">if</span> conda env named reslib exists:<span class="o">]</span> conda activate reslib
 $ git clone https://github.com/gaulinmp/reslib.git
-$ cd reslib
+$ <span class="nb">cd</span> reslib
 $ pip install -r requirements.txt
 $ pip install .
 </pre></div>
 </div>
-<p>If you want to be all fancy and get all the updates, you can install in
+<p>If you want to be fancy and get all the updates, you can install in
 ‘editable’ mode, which links the reslib source code, and allows for git-pull
 updates:</p>
-<blockquote>
-<div><p>$ [if conda env named reslib exists:] conda activate reslib
-$ git clone <a class="reference external" href="https://github.com/gaulinmp/reslib.git">https://github.com/gaulinmp/reslib.git</a>
-$ cd reslib
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="o">[</span><span class="k">if</span> conda env named reslib exists:<span class="o">]</span> conda activate reslib
+$ git clone https://github.com/gaulinmp/reslib.git
+$ <span class="nb">cd</span> reslib
 $ pip install -r requirements.txt
 $ pip install -e .
-$ git pull</p>
-</div></blockquote>
+$ git pull
+</pre></div>
+</div>
 <p>Now, all future updates to the github repository can be retrieved with a
 simple <cite>git pull</cite>.</p>
+</div>
+<div class="section" id="step-0-install-python">
+<h2>Step 0: Install Python<a class="headerlink" href="#step-0-install-python" title="Permalink to this headline">¶</a></h2>
+<p>If you don’t have <a class="reference external" href="https://www.python.org">Python</a> installed (today’s
+the day!), I strongly recommend using
+<a class="reference external" href="https://docs.conda.io/en/latest/miniconda.html">miniconda</a>.
+Once you have Python installed (congrats!) I suggest using conda environments:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ conda create -n reslib
+</pre></div>
+</div>
+<p>This will create an environment named <cite>reslib</cite>, which is now empty, and ready
+to be filled with wonderful python packages.
+Congrats! 🍻</p>
 </div>
 </div>
 
@@ -103,8 +109,9 @@ simple <cite>git pull</cite>.</p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="philosophy.html">Philosophy of ResLib</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation of ResLib</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#install-python">Install Python</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pip-install-from-source">$ pip install from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pip-install">$ pip install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pip-install-from-github">$ pip install from github</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-0-install-python">Step 0: Install Python</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
