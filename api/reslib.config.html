@@ -1,0 +1,218 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Reslib Config (reslib.config) &#8212; Research Library 0.0.01 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="reslib.processing package" href="reslib.processing.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <span class="target" id="module-reslib.config"></span><div class="section" id="reslib-config-reslib-config">
+<h1>Reslib Config (reslib.config)<a class="headerlink" href="#reslib-config-reslib-config" title="Permalink to this headline">¶</a></h1>
+<p>This module facilitates reading configurations from file, and provides some
+defaults based on ‘best practices’ a la
+<a class="reference external" href="http://drivendata.github.io/cookiecutter-data-science/">Cookiecutter Data Science</a>.</p>
+<p>The Config object contains all the configuration values for a given project.
+The values are accessable in python as dictionary objects as well as attributes.
+This is to say that the following little example will work:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">()</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;DATA_DIR&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">config</span><span class="o">.</span><span class="n">DATA_DIR</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>NOTE: The config object is a Singleton, and is only ever initialized once.
+Subsequent initialization must happen manually, but will propegate across
+all instances of the config object. See below for a solution if you do not
+want this behavior.</p>
+<div class="section" id="loading-the-config-file">
+<h2>Loading the config file:<a class="headerlink" href="#loading-the-config-file" title="Permalink to this headline">¶</a></h2>
+<p>The config can be loaded two ways (three if you count accepting defaults):</p>
+<ol class="arabic simple">
+<li><dl class="simple">
+<dt>The config file can be written as a JSON file, whereby all CAPITAL</dt><dd><p>keys will be imported into the Config object.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>The config file can be written as a Python file, which will be eval-ed</dt><dd><p>and then all CAPITAL keys will be imported into the Config object.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</div>
+<div class="section" id="finding-the-config-file">
+<h2>Finding the config file:<a class="headerlink" href="#finding-the-config-file" title="Permalink to this headline">¶</a></h2>
+<p>The config file will be searched for by taking the pwd, and looking for the
+<cite>file_name</cite> all the way up the directory tree until it hits the root.
+If no <cite>file_name</cite> is found, the Config object uses some sane default values.
+These defaults can be seen in the code.</p>
+<p>The file name of the config file defaults to <cite>config.py</cite> or <cite>config.json</cite>.</p>
+</div>
+<div class="section" id="removing-the-singleton-functionality">
+<h2>Removing the Singleton functionality:<a class="headerlink" href="#removing-the-singleton-functionality" title="Permalink to this headline">¶</a></h2>
+<p>The Config object is a singleton, meaning there’s only one copy of its data
+in memory (effectively). Below is an example of what this means:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># fileA.py -- runs first</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="s1">&#39;myproject.json&#39;</span><span class="p">)</span>
+<span class="n">config</span><span class="p">[</span><span class="s1">&#39;NEW_VAR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;new value&#39;</span>
+
+<span class="c1"># fileB.py -- runs second</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="s1">&#39;other_name_ignored.py&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;NEW_VAR&#39;</span><span class="p">])</span>
+<span class="c1"># --&gt; &#39;new value&#39;</span>
+
+<span class="c1"># other_name_ignored.py -- doesn&#39;t run</span>
+<span class="n">NEW_VAR</span> <span class="o">=</span> <span class="s1">&#39;ignored var&#39;</span>
+</pre></div>
+</div>
+<p>If you wish to have multiple configs for multiple parts of your program,
+I suggest two solutions:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p>Manual prefixing: PARTA_ROOT_PATH = ‘folder for part A/data/’</p></li>
+<li><dl>
+<dt>Make your own config object. Inherit this object with just an</dt><dd><p><cite>def __init__</cite>, but drop the: self.__dict__ = self.__borg_data:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">config_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="nb">dict</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargs</span> <span class="ow">or</span> <span class="p">{})</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">config_path</span> <span class="o">=</span> <span class="n">config_path</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_config_path</span><span class="p">(</span><span class="n">config_name</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_populate_from_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config_path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+</ol>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">copyright</dt>
+<dd class="field-odd"><ol class="loweralpha simple" start="3">
+<li><p>2019 by Maclean Gaulin.</p></li>
+</ol>
+</dd>
+<dt class="field-even">license</dt>
+<dd class="field-even"><p>MIT, see LICENSE for more details.</p>
+</dd>
+</dl>
+<dl class="class">
+<dt id="reslib.config.Config">
+<em class="property">class </em><code class="sig-prename descclassname">reslib.config.</code><code class="sig-name descname">Config</code><span class="sig-paren">(</span><em class="sig-param">config_name=None</em>, <em class="sig-param">config_path=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/config.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.config.Config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>The config object for a project, which has config values as both
+dictionary objects as well as attributes.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Research Library</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=gaulinmp&repo=reslib&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../philosophy.html">Philosophy of ResLib</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation of ResLib</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="reslib.html">reslib package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#data">Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#automate">Automate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#process">Process</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#config">Config</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Reslib Config (reslib.config)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../api.html">API</a><ul>
+      <li>Previous: <a href="reslib.processing.html" title="previous chapter">reslib.processing package</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Maclean Gaulin.
+      
+    </div>
+
+    
+    <a href="https://github.com/gaulinmp/reslib" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

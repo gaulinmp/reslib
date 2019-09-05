@@ -1,0 +1,374 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>reslib.config &#8212; Research Library 0.0.01 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for reslib.config</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">********************************</span>
+<span class="sd">Reslib Config (reslib.config)</span>
+<span class="sd">********************************</span>
+
+<span class="sd">This module facilitates reading configurations from file, and provides some</span>
+<span class="sd">defaults based on &#39;best practices&#39; a la</span>
+<span class="sd">`Cookiecutter Data Science &lt;http://drivendata.github.io/cookiecutter-data-science/&gt;`__.</span>
+
+<span class="sd">The Config object contains all the configuration values for a given project.</span>
+<span class="sd">The values are accessable in python as dictionary objects as well as attributes.</span>
+<span class="sd">This is to say that the following little example will work::</span>
+
+<span class="sd">    config = Config()</span>
+<span class="sd">    assert(config[&#39;DATA_DIR&#39;] == config.DATA_DIR)</span>
+
+<span class="sd">NOTE: The config object is a Singleton, and is only ever initialized once.</span>
+<span class="sd">Subsequent initialization must happen manually, but will propegate across</span>
+<span class="sd">all instances of the config object. See below for a solution if you do not</span>
+<span class="sd">want this behavior.</span>
+
+
+<span class="sd">Loading the config file:</span>
+<span class="sd">------------------------</span>
+<span class="sd">The config can be loaded two ways (three if you count accepting defaults):</span>
+
+<span class="sd">#. The config file can be written as a JSON file, whereby all CAPITAL</span>
+<span class="sd">    keys will be imported into the Config object.</span>
+<span class="sd">#. The config file can be written as a Python file, which will be eval-ed</span>
+<span class="sd">    and then all CAPITAL keys will be imported into the Config object.</span>
+
+
+<span class="sd">Finding the config file:</span>
+<span class="sd">------------------------</span>
+<span class="sd">The config file will be searched for by taking the pwd, and looking for the</span>
+<span class="sd">`file_name` all the way up the directory tree until it hits the root.</span>
+<span class="sd">If no `file_name` is found, the Config object uses some sane default values.</span>
+<span class="sd">These defaults can be seen in the code.</span>
+
+<span class="sd">The file name of the config file defaults to `config.py` or `config.json`.</span>
+
+
+<span class="sd">Removing the Singleton functionality:</span>
+<span class="sd">-------------------------------------</span>
+<span class="sd">The Config object is a singleton, meaning there&#39;s only one copy of its data</span>
+<span class="sd">in memory (effectively). Below is an example of what this means::</span>
+
+<span class="sd">    # fileA.py -- runs first</span>
+<span class="sd">    config = Config(&#39;myproject.json&#39;)</span>
+<span class="sd">    config[&#39;NEW_VAR&#39;] = &#39;new value&#39;</span>
+
+<span class="sd">    # fileB.py -- runs second</span>
+<span class="sd">    config = Config(&#39;other_name_ignored.py&#39;)</span>
+<span class="sd">    print(config[&#39;NEW_VAR&#39;])</span>
+<span class="sd">    # --&gt; &#39;new value&#39;</span>
+
+<span class="sd">    # other_name_ignored.py -- doesn&#39;t run</span>
+<span class="sd">    NEW_VAR = &#39;ignored var&#39;</span>
+
+<span class="sd">If you wish to have multiple configs for multiple parts of your program,</span>
+<span class="sd">I suggest two solutions:</span>
+
+<span class="sd">    #. Manual prefixing: PARTA_ROOT_PATH = &#39;folder for part A/data/&#39;</span>
+<span class="sd">    #. Make your own config object. Inherit this object with just an</span>
+<span class="sd">        `def __init__`, but drop the: self.__dict__ = self.__borg_data::</span>
+
+<span class="sd">            def __init__(self, config_name=None, config_path=None, **kwargs):</span>
+<span class="sd">                dict.__init__(self, kwargs or {})</span>
+<span class="sd">                self.config_path = config_path or self._get_config_path(config_name)</span>
+<span class="sd">                self._populate_from_file(self.config_path, **kwargs)</span>
+
+<span class="sd">:copyright: (c) 2019 by Maclean Gaulin.</span>
+<span class="sd">:license: MIT, see LICENSE for more details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># STDlib imports</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="c1"># 3rd party package imports</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Config"><a class="viewcode-back" href="../../api/reslib.config.html#reslib.config.Config">[docs]</a><span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The config object for a project, which has config values as both</span>
+<span class="sd">    dictionary objects as well as attributes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__borg_data</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1"># http://code.activestate.com/recipes/66531/</span>
+    <span class="n">__is_initialized</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">config_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create config object. Allows for passing additional config objects via</span>
+<span class="sd">        keyword arguments, which will override the default values or those found</span>
+<span class="sd">        in the config file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            config_name: name of config file. Name can include or exclude</span>
+<span class="sd">                `.json` or `.py`, both are tried (in that order)</span>
+<span class="sd">                if `config_name` alone isn&#39;t found.</span>
+<span class="sd">            config_path: Full path of the config file. If this is provided,</span>
+<span class="sd">                config_name is ignored.</span>
+<span class="sd">            **kwargs: Optional additional keyword arguments, for which the</span>
+<span class="sd">                CAPITAL keys will be added to the config object, overriding the</span>
+<span class="sd">                config file when keys are present in both.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Borg pattern for singletons</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__borg_data</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__is_initialized</span><span class="p">:</span>
+            <span class="c1"># Set the config_path based on input arguments (or default)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config_path</span> <span class="o">=</span> <span class="n">config_path</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_config_path</span><span class="p">(</span><span class="n">config_name</span><span class="p">)</span>
+
+            <span class="c1"># Load config file if found</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_populate_from_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config_path</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># Load overrides (does nothing if none provided)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_populate_from_dict</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">__is_initialized</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Config loaded from: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">Keys: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config_path</span><span class="p">,</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">isupper</span><span class="p">()])</span>
+
+
+    <span class="k">def</span> <span class="nf">_get_config_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_name</span><span class="o">=</span><span class="s2">&quot;reslib.config&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find the config file by name. The config file will be searched for by</span>
+<span class="sd">        taking the current working directory, and looking for the `config_name`</span>
+<span class="sd">        all the way up the directory tree until it hits the root.</span>
+
+<span class="sd">        If no `config_name` is provided, the name defaults to: &#39;reslib.config&#39;</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            config_name: name of config file. Name can include or exclude</span>
+<span class="sd">                `.json` or `.py`, both are tried (in that order)</span>
+<span class="sd">                if `config_name` alone isn&#39;t found.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Path of the found config file, or None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">config_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">config_name</span><span class="o">=</span><span class="s2">&quot;reslib.config&quot;</span>
+
+        <span class="n">extension_order</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;.json&quot;</span><span class="p">,</span> <span class="s2">&quot;.py&quot;</span><span class="p">)</span>
+
+        <span class="n">last_dir</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">this_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">config_name</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="n">last_dir</span> <span class="o">!=</span> <span class="n">this_dir</span><span class="p">:</span>
+            <span class="c1"># Search dir for config_name (then plus extensions)</span>
+            <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">extension_order</span><span class="p">:</span>
+                <span class="n">check_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">this_dir</span><span class="p">,</span> <span class="n">config_name</span> <span class="o">+</span> <span class="n">ext</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">check_path</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">check_path</span>
+
+            <span class="n">last_dir</span><span class="p">,</span> <span class="n">this_dir</span> <span class="o">=</span> <span class="n">this_dir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">this_dir</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_dict_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Make a dictionary from a python or json file, based on extension.</span>
+<span class="sd">        Only includes keys which are CAPITALIZED.</span>
+
+<span class="sd">        NOTE: A python config file is `eval`-ed, so this is potentially an</span>
+<span class="sd">        attack vector. Please don&#39;t load a python config file you aren&#39;t</span>
+<span class="sd">        completely comfortable with.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            config_path: Full path of the config file.</span>
+<span class="sd">            **kwargs: Optional read-arguments passed to `open`.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: Dictionary of KEY:value pairs where KEY is all CAPITALIZED</span>
+<span class="sd">                keys found in the Python/JSON file.</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the config file doesn&#39;t have .json or .py extension.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">config_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+
+        <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">config_path</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># Load json</span>
+        <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="s1">&#39;.json&#39;</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ext</span> <span class="o">==</span> <span class="s1">&#39;.py&#39;</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;rb&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">exec</span><span class="p">(</span><span class="nb">compile</span><span class="p">(</span><span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">config_path</span><span class="p">,</span> <span class="s2">&quot;exec&quot;</span><span class="p">),</span> <span class="n">obj</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Config file extension unrecognized. Expected &quot;</span>
+                             <span class="s2">&quot;.json or .py, got </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">isupper</span><span class="p">()}</span>
+
+    <span class="k">def</span> <span class="nf">_populate_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Populate the Config from a python or json file, based on extension.</span>
+<span class="sd">        Only includes keys which are CAPITALIZED.</span>
+
+<span class="sd">        NOTE: A python config file is `eval`-ed, so this is potentially an</span>
+<span class="sd">        attack vector. Please don&#39;t load a python config file you aren&#39;t</span>
+<span class="sd">        completely comfortable with.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            config_path: Full path of the config file. Default:</span>
+<span class="sd">                `config_path` from the Config object.</span>
+<span class="sd">            silent: Boolean flag for whether FileNotFoundError is raised if the</span>
+<span class="sd">                `config_path` doesn&#39;t exist.</span>
+<span class="sd">            **kwargs: Optional read-arguments passed to `open`.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: Dictionary which was added to the Config object.</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            FileNotFoundError: If file isn&#39;t found, and `silent` is False.</span>
+<span class="sd">            ValueError: If the config file doesn&#39;t have .json or .py extension.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dict_from_file</span><span class="p">(</span><span class="n">config_path</span><span class="o">=</span><span class="n">config_path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Load Config error: file not found: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">config_path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">silent</span><span class="p">:</span>
+                <span class="k">raise</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_populate_from_dict</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_populate_from_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_dict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Populate the Config from a dictionary.</span>
+
+<span class="sd">        NOTE: A python config file is `eval`-ed, so this is potentially an</span>
+<span class="sd">        attack vector. Please don&#39;t load a python config file you aren&#39;t</span>
+<span class="sd">        completely comfortable with.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            config_path: Full path of the config file. Default:</span>
+<span class="sd">                `config_path` from the Config object.</span>
+<span class="sd">            **kwargs: Optional read-arguments passed to `open`.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: Dictionary which was added to the Config object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">config_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
+                <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+
+        <span class="k">return</span> <span class="n">obj</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Research Library</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=gaulinmp&repo=reslib&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../philosophy.html">Philosophy of ResLib</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation of ResLib</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Maclean Gaulin.
+      
+    </div>
+
+    
+    <a href="https://github.com/gaulinmp/reslib" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>
