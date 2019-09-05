@@ -3,6 +3,7 @@
 
 ############## Not version specific ##############
 sphinx
+sphinx-rtd-theme
 # tqdm
 # ipyparallel
 # notebook
