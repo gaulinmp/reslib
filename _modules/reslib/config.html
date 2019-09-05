@@ -68,11 +68,11 @@
 <span class="sd">Finding the config file:</span>
 <span class="sd">------------------------</span>
 <span class="sd">The config file will be searched for by taking the pwd, and looking for the</span>
-<span class="sd">`file_name` all the way up the directory tree until it hits the root.</span>
-<span class="sd">If no `file_name` is found, the Config object uses some sane default values.</span>
+<span class="sd">``file_name`` all the way up the directory tree until it hits the root.</span>
+<span class="sd">If no ``file_name`` is found, the Config object uses some sane default values.</span>
 <span class="sd">These defaults can be seen in the code.</span>
 
-<span class="sd">The file name of the config file defaults to `config.py` or `config.json`.</span>
+<span class="sd">The file name of the config file defaults to ``reslib.config.[py|json]``.</span>
 
 
 <span class="sd">Removing the Singleton functionality:</span>
@@ -97,7 +97,7 @@
 
 <span class="sd">    #. Manual prefixing: PARTA_ROOT_PATH = &#39;folder for part A/data/&#39;</span>
 <span class="sd">    #. Make your own config object. Inherit this object with just an</span>
-<span class="sd">        `def __init__`, but drop the: self.__dict__ = self.__borg_data::</span>
+<span class="sd">        ``def __init__``, but drop the: self.__dict__ = self.__borg_data::</span>
 
 <span class="sd">            def __init__(self, config_name=None, config_path=None, **kwargs):</span>
 <span class="sd">                dict.__init__(self, kwargs or {})</span>
@@ -135,10 +135,10 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            config_name: name of config file. Name can include or exclude</span>
-<span class="sd">                `.json` or `.py`, both are tried (in that order)</span>
-<span class="sd">                if `config_name` alone isn&#39;t found.</span>
+<span class="sd">                ``.json`` or ``.py``, both are tried (in that order)</span>
+<span class="sd">                if ``config_name`` alone isn&#39;t found.</span>
 <span class="sd">            config_path: Full path of the config file. If this is provided,</span>
-<span class="sd">                config_name is ignored.</span>
+<span class="sd">                ``config_name`` is ignored.</span>
 <span class="sd">            **kwargs: Optional additional keyword arguments, for which the</span>
 <span class="sd">                CAPITAL keys will be added to the config object, overriding the</span>
 <span class="sd">                config file when keys are present in both.</span>
@@ -178,12 +178,12 @@
 <span class="sd">        taking the current working directory, and looking for the `config_name`</span>
 <span class="sd">        all the way up the directory tree until it hits the root.</span>
 
-<span class="sd">        If no `config_name` is provided, the name defaults to: &#39;reslib.config&#39;</span>
+<span class="sd">        If no ``config_name`` is provided, the name defaults to: &#39;reslib.config&#39;</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config_name: name of config file. Name can include or exclude</span>
-<span class="sd">                `.json` or `.py`, both are tried (in that order)</span>
-<span class="sd">                if `config_name` alone isn&#39;t found.</span>
+<span class="sd">                ``.json`` or ``.py``, both are tried (in that order)</span>
+<span class="sd">                if ``config_name`` alone isn&#39;t found.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Path of the found config file, or None.</span>
@@ -210,13 +210,13 @@
 <span class="sd">        Make a dictionary from a python or json file, based on extension.</span>
 <span class="sd">        Only includes keys which are CAPITALIZED.</span>
 
-<span class="sd">        NOTE: A python config file is `eval`-ed, so this is potentially an</span>
+<span class="sd">        NOTE: A python config file is ``eval``-ed, so this is potentially an</span>
 <span class="sd">        attack vector. Please don&#39;t load a python config file you aren&#39;t</span>
 <span class="sd">        completely comfortable with.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config_path: Full path of the config file.</span>
-<span class="sd">            **kwargs: Optional read-arguments passed to `open`.</span>
+<span class="sd">            **kwargs: Optional read-arguments passed to ``open``.</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            dict: Dictionary of KEY:value pairs where KEY is all CAPITALIZED</span>
 <span class="sd">                keys found in the Python/JSON file.</span>
@@ -247,20 +247,20 @@
 <span class="sd">        Populate the Config from a python or json file, based on extension.</span>
 <span class="sd">        Only includes keys which are CAPITALIZED.</span>
 
-<span class="sd">        NOTE: A python config file is `eval`-ed, so this is potentially an</span>
+<span class="sd">        NOTE: A python config file is ``eval``-ed, so this is potentially an</span>
 <span class="sd">        attack vector. Please don&#39;t load a python config file you aren&#39;t</span>
 <span class="sd">        completely comfortable with.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config_path: Full path of the config file. Default:</span>
-<span class="sd">                `config_path` from the Config object.</span>
+<span class="sd">                ``config_path`` from the Config object.</span>
 <span class="sd">            silent: Boolean flag for whether FileNotFoundError is raised if the</span>
-<span class="sd">                `config_path` doesn&#39;t exist.</span>
-<span class="sd">            **kwargs: Optional read-arguments passed to `open`.</span>
+<span class="sd">                ``config_path`` doesn&#39;t exist.</span>
+<span class="sd">            **kwargs: Optional read-arguments passed to ``open``.</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            dict: Dictionary which was added to the Config object.</span>
 <span class="sd">        Raises:</span>
-<span class="sd">            FileNotFoundError: If file isn&#39;t found, and `silent` is False.</span>
+<span class="sd">            FileNotFoundError: If file isn&#39;t found, and ``silent`` is False.</span>
 <span class="sd">            ValueError: If the config file doesn&#39;t have .json or .py extension.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
@@ -276,14 +276,14 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Populate the Config from a dictionary.</span>
 
-<span class="sd">        NOTE: A python config file is `eval`-ed, so this is potentially an</span>
+<span class="sd">        NOTE: A python config file is ``eval``-ed, so this is potentially an</span>
 <span class="sd">        attack vector. Please don&#39;t load a python config file you aren&#39;t</span>
 <span class="sd">        completely comfortable with.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config_path: Full path of the config file. Default:</span>
-<span class="sd">                `config_path` from the Config object.</span>
-<span class="sd">            **kwargs: Optional read-arguments passed to `open`.</span>
+<span class="sd">                ``config_path`` from the Config object.</span>
+<span class="sd">            **kwargs: Optional read-arguments passed to ``open``.</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            dict: Dictionary which was added to the Config object.</span>
 <span class="sd">        &quot;&quot;&quot;</span>

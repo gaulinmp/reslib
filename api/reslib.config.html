@@ -66,10 +66,10 @@ want this behavior.</p>
 <div class="section" id="finding-the-config-file">
 <h2>Finding the config file:<a class="headerlink" href="#finding-the-config-file" title="Permalink to this headline">¶</a></h2>
 <p>The config file will be searched for by taking the pwd, and looking for the
-<cite>file_name</cite> all the way up the directory tree until it hits the root.
-If no <cite>file_name</cite> is found, the Config object uses some sane default values.
+<code class="docutils literal notranslate"><span class="pre">file_name</span></code> all the way up the directory tree until it hits the root.
+If no <code class="docutils literal notranslate"><span class="pre">file_name</span></code> is found, the Config object uses some sane default values.
 These defaults can be seen in the code.</p>
-<p>The file name of the config file defaults to <cite>config.py</cite> or <cite>config.json</cite>.</p>
+<p>The file name of the config file defaults to <code class="docutils literal notranslate"><span class="pre">reslib.config.[py|json]</span></code>.</p>
 </div>
 <div class="section" id="removing-the-singleton-functionality">
 <h2>Removing the Singleton functionality:<a class="headerlink" href="#removing-the-singleton-functionality" title="Permalink to this headline">¶</a></h2>
@@ -94,7 +94,7 @@ I suggest two solutions:</p>
 <div><ol class="arabic">
 <li><p>Manual prefixing: PARTA_ROOT_PATH = ‘folder for part A/data/’</p></li>
 <li><dl>
-<dt>Make your own config object. Inherit this object with just an</dt><dd><p><cite>def __init__</cite>, but drop the: self.__dict__ = self.__borg_data:</p>
+<dt>Make your own config object. Inherit this object with just an</dt><dd><p><code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">__init__</span></code>, but drop the: self.__dict__ = self.__borg_data:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">config_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="nb">dict</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargs</span> <span class="ow">or</span> <span class="p">{})</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">config_path</span> <span class="o">=</span> <span class="n">config_path</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_config_path</span><span class="p">(</span><span class="n">config_name</span><span class="p">)</span>
