@@ -35,11 +35,11 @@ The config can be loaded two ways (three if you count accepting defaults):
 Finding the config file:
 ------------------------
 The config file will be searched for by taking the pwd, and looking for the
-`file_name` all the way up the directory tree until it hits the root.
-If no `file_name` is found, the Config object uses some sane default values.
+``file_name`` all the way up the directory tree until it hits the root.
+If no ``file_name`` is found, the Config object uses some sane default values.
 These defaults can be seen in the code.
 
-The file name of the config file defaults to `config.py` or `config.json`.
+The file name of the config file defaults to ``reslib.config.[py|json]``.
 
 
 Removing the Singleton functionality:
@@ -64,7 +64,7 @@ I suggest two solutions:
 
     #. Manual prefixing: PARTA_ROOT_PATH = 'folder for part A/data/'
     #. Make your own config object. Inherit this object with just an
-        `def __init__`, but drop the: self.__dict__ = self.__borg_data::
+        ``def __init__``, but drop the: self.__dict__ = self.__borg_data::
 
             def __init__(self, config_name=None, config_path=None, **kwargs):
                 dict.__init__(self, kwargs or {})
@@ -102,10 +102,10 @@ class Config:
 
         Args:
             config_name: name of config file. Name can include or exclude
-                `.json` or `.py`, both are tried (in that order)
-                if `config_name` alone isn't found.
+                ``.json`` or ``.py``, both are tried (in that order)
+                if ``config_name`` alone isn't found.
             config_path: Full path of the config file. If this is provided,
-                config_name is ignored.
+                ``config_name`` is ignored.
             **kwargs: Optional additional keyword arguments, for which the
                 CAPITAL keys will be added to the config object, overriding the
                 config file when keys are present in both.
@@ -145,12 +145,12 @@ class Config:
         taking the current working directory, and looking for the `config_name`
         all the way up the directory tree until it hits the root.
 
-        If no `config_name` is provided, the name defaults to: 'reslib.config'
+        If no ``config_name`` is provided, the name defaults to: 'reslib.config'
 
         Args:
             config_name: name of config file. Name can include or exclude
-                `.json` or `.py`, both are tried (in that order)
-                if `config_name` alone isn't found.
+                ``.json`` or ``.py``, both are tried (in that order)
+                if ``config_name`` alone isn't found.
 
         Returns:
             Path of the found config file, or None.
@@ -177,13 +177,13 @@ class Config:
         Make a dictionary from a python or json file, based on extension.
         Only includes keys which are CAPITALIZED.
 
-        NOTE: A python config file is `eval`-ed, so this is potentially an
+        NOTE: A python config file is ``eval``-ed, so this is potentially an
         attack vector. Please don't load a python config file you aren't
         completely comfortable with.
 
         Args:
             config_path: Full path of the config file.
-            **kwargs: Optional read-arguments passed to `open`.
+            **kwargs: Optional read-arguments passed to ``open``.
         Returns:
             dict: Dictionary of KEY:value pairs where KEY is all CAPITALIZED
                 keys found in the Python/JSON file.
@@ -214,20 +214,20 @@ class Config:
         Populate the Config from a python or json file, based on extension.
         Only includes keys which are CAPITALIZED.
 
-        NOTE: A python config file is `eval`-ed, so this is potentially an
+        NOTE: A python config file is ``eval``-ed, so this is potentially an
         attack vector. Please don't load a python config file you aren't
         completely comfortable with.
 
         Args:
             config_path: Full path of the config file. Default:
-                `config_path` from the Config object.
+                ``config_path`` from the Config object.
             silent: Boolean flag for whether FileNotFoundError is raised if the
-                `config_path` doesn't exist.
-            **kwargs: Optional read-arguments passed to `open`.
+                ``config_path`` doesn't exist.
+            **kwargs: Optional read-arguments passed to ``open``.
         Returns:
             dict: Dictionary which was added to the Config object.
         Raises:
-            FileNotFoundError: If file isn't found, and `silent` is False.
+            FileNotFoundError: If file isn't found, and ``silent`` is False.
             ValueError: If the config file doesn't have .json or .py extension.
         """
         try:
@@ -243,14 +243,14 @@ class Config:
         """
         Populate the Config from a dictionary.
 
-        NOTE: A python config file is `eval`-ed, so this is potentially an
+        NOTE: A python config file is ``eval``-ed, so this is potentially an
         attack vector. Please don't load a python config file you aren't
         completely comfortable with.
 
         Args:
             config_path: Full path of the config file. Default:
-                `config_path` from the Config object.
-            **kwargs: Optional read-arguments passed to `open`.
+                ``config_path`` from the Config object.
+            **kwargs: Optional read-arguments passed to ``open``.
         Returns:
             dict: Dictionary which was added to the Config object.
         """
