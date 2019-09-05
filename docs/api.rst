@@ -46,3 +46,11 @@ Process
    :maxdepth: 2
 
    api/reslib.processing
+
+Config
+-----------------
+
+.. toctree::
+   :maxdepth: 2
+
+   api/reslib.config
