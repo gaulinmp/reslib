@@ -66,10 +66,11 @@ I suggest two solutions:
     #. Make your own config object. Inherit this object with just an
         ``def __init__``, but drop the: self.__dict__ = self.__borg_data::
 
-            def __init__(self, config_name=None, config_path=None, **kwargs):
-                dict.__init__(self, kwargs or {})
-                self.config_path = config_path or self._get_config_path(config_name)
-                self._populate_from_file(self.config_path, **kwargs)
+            class MultiConfig(reslib.config.Config):
+                def __init__(self, config_name=None, config_path=None, **kwargs):
+                    dict.__init__(self, kwargs or {})
+                    self.config_path = config_path or self._get_config_path(config_name)
+                    self._populate_from_file(self.config_path, **kwargs)
 
 :copyright: (c) 2019 by Maclean Gaulin.
 :license: MIT, see LICENSE for more details.
