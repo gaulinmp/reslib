@@ -1,5 +1,6 @@
 
 .. automodule:: reslib.config
    :members:
-   :undoc-members:
+   :private-members:
+   :no-undoc-members:
    :show-inheritance:

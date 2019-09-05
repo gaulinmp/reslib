@@ -99,10 +99,11 @@
 <span class="sd">    #. Make your own config object. Inherit this object with just an</span>
 <span class="sd">        ``def __init__``, but drop the: self.__dict__ = self.__borg_data::</span>
 
-<span class="sd">            def __init__(self, config_name=None, config_path=None, **kwargs):</span>
-<span class="sd">                dict.__init__(self, kwargs or {})</span>
-<span class="sd">                self.config_path = config_path or self._get_config_path(config_name)</span>
-<span class="sd">                self._populate_from_file(self.config_path, **kwargs)</span>
+<span class="sd">            class MultiConfig(reslib.config.Config):</span>
+<span class="sd">                def __init__(self, config_name=None, config_path=None, **kwargs):</span>
+<span class="sd">                    dict.__init__(self, kwargs or {})</span>
+<span class="sd">                    self.config_path = config_path or self._get_config_path(config_name)</span>
+<span class="sd">                    self._populate_from_file(self.config_path, **kwargs)</span>
 
 <span class="sd">:copyright: (c) 2019 by Maclean Gaulin.</span>
 <span class="sd">:license: MIT, see LICENSE for more details.</span>
@@ -172,7 +173,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">config_path</span><span class="p">,</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">isupper</span><span class="p">()])</span>
 
 
-    <span class="k">def</span> <span class="nf">_get_config_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_name</span><span class="o">=</span><span class="s2">&quot;reslib.config&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="Config._get_config_path"><a class="viewcode-back" href="../../api/reslib.config.html#reslib.config.Config._get_config_path">[docs]</a>    <span class="k">def</span> <span class="nf">_get_config_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_name</span><span class="o">=</span><span class="s2">&quot;reslib.config&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Find the config file by name. The config file will be searched for by</span>
 <span class="sd">        taking the current working directory, and looking for the `config_name`</span>
@@ -203,9 +204,9 @@
                 <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">check_path</span><span class="p">):</span>
                     <span class="k">return</span> <span class="n">check_path</span>
 
-            <span class="n">last_dir</span><span class="p">,</span> <span class="n">this_dir</span> <span class="o">=</span> <span class="n">this_dir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">this_dir</span><span class="p">)</span>
+            <span class="n">last_dir</span><span class="p">,</span> <span class="n">this_dir</span> <span class="o">=</span> <span class="n">this_dir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">this_dir</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">_get_dict_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Config._get_dict_from_file"><a class="viewcode-back" href="../../api/reslib.config.html#reslib.config.Config._get_dict_from_file">[docs]</a>    <span class="k">def</span> <span class="nf">_get_dict_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Make a dictionary from a python or json file, based on extension.</span>
 <span class="sd">        Only includes keys which are CAPITALIZED.</span>
@@ -240,9 +241,9 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Config file extension unrecognized. Expected &quot;</span>
                              <span class="s2">&quot;.json or .py, got </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">isupper</span><span class="p">()}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">isupper</span><span class="p">()}</span></div>
 
-    <span class="k">def</span> <span class="nf">_populate_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Config._populate_from_file"><a class="viewcode-back" href="../../api/reslib.config.html#reslib.config.Config._populate_from_file">[docs]</a>    <span class="k">def</span> <span class="nf">_populate_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Populate the Config from a python or json file, based on extension.</span>
 <span class="sd">        Only includes keys which are CAPITALIZED.</span>
@@ -270,9 +271,9 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">silent</span><span class="p">:</span>
                 <span class="k">raise</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_populate_from_dict</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_populate_from_dict</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">_populate_from_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_dict</span><span class="p">):</span>
+<div class="viewcode-block" id="Config._populate_from_dict"><a class="viewcode-back" href="../../api/reslib.config.html#reslib.config.Config._populate_from_dict">[docs]</a>    <span class="k">def</span> <span class="nf">_populate_from_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_dict</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Populate the Config from a dictionary.</span>
 
@@ -292,7 +293,7 @@
             <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
                 <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
 
-        <span class="k">return</span> <span class="n">obj</span></div>
+        <span class="k">return</span> <span class="n">obj</span></div></div>
 </pre></div>
 
           </div>
