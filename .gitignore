@@ -1,5 +1,7 @@
 # Project specific excludes
 .vscode/
+*.code-workspace
+dev_notebooks/
 
 # Byte-compiled python
 __pycache__/

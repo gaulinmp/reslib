@@ -127,6 +127,14 @@ class Config:
             self.__is_initialized = True
 
 
+    def get(self, *key_and_default, **default_maybe):
+        if len(key_and_default) == 1 and 'default' not in default_maybe:
+            return self[key_and_default[0]]
+        if len(key_and_default) == 1:
+            return getattr(key_and_default[0], default_maybe['default'])
+        return getattr(self, *key_and_default)
+
+
     def __getitem__(self, key):
         return getattr(self, key)
 
