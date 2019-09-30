@@ -244,6 +244,155 @@
 <dd class="field-even"><p>MIT, see LICENSE for more details.</p>
 </dd>
 </dl>
+<dl class="class">
+<dt id="reslib.data.cache.DataFrameCache">
+<em class="property">class </em><code class="sig-prename descclassname">reslib.data.cache.</code><code class="sig-name descname">DataFrameCache</code><span class="sig-paren">(</span><em class="sig-param">override_filename=None</em>, <em class="sig-param">delete_cache=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/data/cache.html#DataFrameCache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.data.cache.DataFrameCache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Base class for caching intermediate files.</p>
+<p>Defaults to reading/writing dataset cache with pandas to_csv.
+Default write args: sep=”   “, index=False
+Default read args: sep=”    “</p>
+<p>Suggested subclassing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">CompustatFUNDA</span><span class="p">(</span><span class="n">DataFrameCache</span><span class="p">):</span>
+    <span class="n">override_directory</span> <span class="o">=</span> <span class="s1">&#39;~/project/data/comp/&#39;</span>
+    <span class="n">filename</span> <span class="s1">&#39;funda&#39;</span>
+
+    <span class="k">def</span> <span class="nf">make_dataset</span><span class="p">():</span>
+        <span class="c1"># Download funda, return it as dataframe</span>
+        <span class="k">pass</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="reslib.data.cache.DataFrameCache.data">
+<em class="property">property </em><code class="sig-name descname">data</code><a class="headerlink" href="#reslib.data.cache.DataFrameCache.data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Property accessor for the underlying dataframe.
+Loads cached dataframe into memory, calling
+<cite>make_dataset()</cite> if no cache is available.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="reslib.data.cache.DataFrameCache.delete_cache">
+<code class="sig-name descname">delete_cache</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/data/cache.html#DataFrameCache.delete_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.data.cache.DataFrameCache.delete_cache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method for deleting cached file if it exists.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="reslib.data.cache.DataFrameCache.df">
+<code class="sig-name descname">df</code><em class="property"> = None</em><a class="headerlink" href="#reslib.data.cache.DataFrameCache.df" title="Permalink to this definition">¶</a></dt>
+<dd><p>DataFrame of the data</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="reslib.data.cache.DataFrameCache.filename">
+<code class="sig-name descname">filename</code><em class="property"> = None</em><a class="headerlink" href="#reslib.data.cache.DataFrameCache.filename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override filename to name the dataset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="reslib.data.cache.DataFrameCache.is_cached">
+<em class="property">property </em><code class="sig-name descname">is_cached</code><a class="headerlink" href="#reslib.data.cache.DataFrameCache.is_cached" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean value for whether cached file exists at <cite>path</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="reslib.data.cache.DataFrameCache.make_dataset">
+<code class="sig-name descname">make_dataset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/data/cache.html#DataFrameCache.make_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.data.cache.DataFrameCache.make_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make dataset to be saved to cache.</p>
+<p>Should return a dataframe.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="reslib.data.cache.DataFrameCache.override_directory">
+<code class="sig-name descname">override_directory</code><em class="property"> = None</em><a class="headerlink" href="#reslib.data.cache.DataFrameCache.override_directory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override directory to store the dataset in.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="reslib.data.cache.DataFrameCache.path">
+<code class="sig-name descname">path</code><em class="property"> = None</em><a class="headerlink" href="#reslib.data.cache.DataFrameCache.path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Full path to the dataset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="reslib.data.cache.DataFrameCache.read">
+<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">read_args=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/data/cache.html#DataFrameCache.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.data.cache.DataFrameCache.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read df from cache, returning ‘cleaned’ df.</p>
+<p>Calls: _pre_read_hook() before, and _post_read_hook(read_df) after.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>read_args</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><em>dict</em></a>) – Dictionary of read-args to be passed to the <cite>read</cite>
+function, overriding those specified in <cite>self.read_args</cite>.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>DataFrame which is passed through</dt><dd><p><cite>_post_read_hook(df)</cite>.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="reslib.data.cache.DataFrameCache.read_args">
+<code class="sig-name descname">read_args</code><em class="property"> = {'sep': '\t'}</em><a class="headerlink" href="#reslib.data.cache.DataFrameCache.read_args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="reslib.data.cache.DataFrameCache.write">
+<code class="sig-name descname">write</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">overwrite_cache=False</em>, <em class="sig-param">write_args=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/data/cache.html#DataFrameCache.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.data.cache.DataFrameCache.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write df to cache, returning ‘cleaned’ df.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – DataFrame to be written to disk, using the
+<cite>self.write_args</cite> and any override <cite>write_args</cite> if provided.</p></li>
+<li><p><strong>write_args</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><em>dict</em></a>) – Dictionary of any <cite>write_args</cite> which will
+override <cite>self.write_args</cite></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="reslib.data.cache.DataFrameCache.write_args">
+<code class="sig-name descname">write_args</code><em class="property"> = {'index': False, 'sep': '\t'}</em><a class="headerlink" href="#reslib.data.cache.DataFrameCache.write_args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="reslib.data.cache.ReadWriteArgCopyToDescendants">
+<em class="property">class </em><code class="sig-prename descclassname">reslib.data.cache.</code><code class="sig-name descname">ReadWriteArgCopyToDescendants</code><a class="reference internal" href="../_modules/reslib/data/cache.html#ReadWriteArgCopyToDescendants"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.data.cache.ReadWriteArgCopyToDescendants" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></a></p>
+<p>Make read_args and write_args inheret from parent without super() init code.
+I know about dangerous mutable properties, but doubt it will apply much.
+This is about useage by research academics, not massively parallel projects.
+Citation: <a class="reference external" href="https://stackoverflow.com/a/42036304/1959876">https://stackoverflow.com/a/42036304/1959876</a></p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Gramma</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">ReadWriteArgCopyToDescendants</span><span class="p">):</span>
+    <span class="n">read_args</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;sep&#39;</span><span class="p">:</span> <span class="s1">&#39;       &#39;</span><span class="p">}</span> <span class="c1"># Let&#39;s say we just want a read_args at first</span>
+
+<span class="k">class</span> <span class="nc">Mom</span><span class="p">(</span><span class="n">Gramma</span><span class="p">):</span>
+    <span class="n">read_args</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;parse_dates&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;datadate&#39;</span><span class="p">,</span> <span class="p">]}</span>
+    <span class="k">pass</span>
+
+<span class="k">assert</span> <span class="n">Mom</span><span class="p">()</span><span class="o">.</span><span class="n">read_args</span> <span class="o">==</span> <span class="p">{</span><span class="s1">&#39;sep&#39;</span><span class="p">:</span> <span class="s1">&#39;     &#39;</span><span class="p">,</span> <span class="s1">&#39;parse_dates&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;datadate&#39;</span><span class="p">,</span> <span class="p">]}</span>
+<span class="k">assert</span> <span class="n">Mom</span><span class="p">()</span><span class="o">.</span><span class="n">write_args</span> <span class="o">==</span> <span class="p">{}</span>
+
+<span class="k">class</span> <span class="nc">Kid</span><span class="p">(</span><span class="n">Mom</span><span class="p">):</span>
+    <span class="n">write_args</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;sep&#39;</span><span class="p">:</span> <span class="s1">&#39;,&#39;</span><span class="p">}</span>
+    <span class="k">pass</span>
+
+<span class="k">assert</span> <span class="n">Kid</span><span class="p">()</span><span class="o">.</span><span class="n">read_args</span> <span class="o">==</span> <span class="p">{</span><span class="s1">&#39;sep&#39;</span><span class="p">:</span> <span class="s1">&#39;     &#39;</span><span class="p">,</span> <span class="s1">&#39;parse_dates&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;datadate&#39;</span><span class="p">,</span> <span class="p">]}</span>
+<span class="k">assert</span> <span class="n">Kid</span><span class="p">()</span><span class="o">.</span><span class="n">write_args</span> <span class="o">==</span> <span class="p">{</span><span class="s1">&#39;sep&#39;</span><span class="p">:</span> <span class="s1">&#39;,&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
 </div>
 </div>
 <div class="section" id="module-reslib.data.dataframe">

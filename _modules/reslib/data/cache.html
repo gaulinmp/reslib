@@ -1,0 +1,517 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>reslib.data.cache &mdash; Research Library 0.0.01 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Research Library
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.01
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../philosophy.html">Philosophy of ResLib</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation of ResLib</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quickstart</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Research Library</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reslib.data.cache</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reslib.data.cache</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">********************************</span>
+<span class="sd">reslib.data.cache</span>
+<span class="sd">********************************</span>
+
+<span class="sd">This module contains the DatasetCache object for reading/writing cached datasets to disk.</span>
+
+<span class="sd">:copyright: (c) 2019 by Maclean Gaulin.</span>
+<span class="sd">:license: MIT, see LICENSE for more details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># STDlib imports</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="c1"># import datetime as dt</span>
+
+<span class="c1"># 3rd party package imports</span>
+<span class="c1"># import numpy as np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="c1"># project imports</span>
+<span class="kn">from</span> <span class="nn">reslib.config</span> <span class="k">import</span> <span class="n">Config</span>
+
+
+<span class="c1"># Local logger</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ReadWriteArgCopyToDescendants"><a class="viewcode-back" href="../../../api/reslib.data.html#reslib.data.cache.ReadWriteArgCopyToDescendants">[docs]</a><span class="k">class</span> <span class="nc">ReadWriteArgCopyToDescendants</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Make read_args and write_args inheret from parent without super() init code.</span>
+<span class="sd">    I know about dangerous mutable properties, but doubt it will apply much.</span>
+<span class="sd">    This is about useage by research academics, not massively parallel projects.</span>
+<span class="sd">    Citation: https://stackoverflow.com/a/42036304/1959876</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        class Gramma(metaclass=ReadWriteArgCopyToDescendants):</span>
+<span class="sd">            read_args = {&#39;sep&#39;: &#39;\t&#39;} # Let&#39;s say we just want a read_args at first</span>
+
+<span class="sd">        class Mom(Gramma):</span>
+<span class="sd">            read_args = {&#39;parse_dates&#39;: [&#39;datadate&#39;, ]}</span>
+<span class="sd">            pass</span>
+
+<span class="sd">        assert Mom().read_args == {&#39;sep&#39;: &#39;\t&#39;, &#39;parse_dates&#39;: [&#39;datadate&#39;, ]}</span>
+<span class="sd">        assert Mom().write_args == {}</span>
+
+<span class="sd">        class Kid(Mom):</span>
+<span class="sd">            write_args = {&#39;sep&#39;: &#39;,&#39;}</span>
+<span class="sd">            pass</span>
+
+<span class="sd">        assert Kid().read_args == {&#39;sep&#39;: &#39;\t&#39;, &#39;parse_dates&#39;: [&#39;datadate&#39;, ]}</span>
+<span class="sd">        assert Kid().write_args == {&#39;sep&#39;: &#39;,&#39;}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+        <span class="n">new_class</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+
+        <span class="c1"># Add one of these for each &#39;dict&#39; you want to copy up the tree</span>
+        <span class="n">base_read_args</span> <span class="o">=</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">bc</span><span class="p">,</span> <span class="s1">&#39;read_args&#39;</span><span class="p">,</span> <span class="p">{})</span>
+                          <span class="k">for</span> <span class="n">bc</span> <span class="ow">in</span> <span class="n">bases</span> <span class="o">+</span> <span class="p">(</span><span class="n">new_class</span><span class="p">,)]</span>
+
+        <span class="n">new_class</span><span class="o">.</span><span class="n">read_args</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">read_args</span> <span class="ow">in</span> <span class="n">base_read_args</span><span class="p">:</span>
+            <span class="n">new_class</span><span class="o">.</span><span class="n">read_args</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">read_args</span><span class="p">)</span>
+
+        <span class="c1"># Add one of these for each &#39;dict&#39; you want to copy up the tree</span>
+        <span class="n">base_write_args</span> <span class="o">=</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">bc</span><span class="p">,</span> <span class="s1">&#39;write_args&#39;</span><span class="p">,</span> <span class="p">{})</span>
+                           <span class="k">for</span> <span class="n">bc</span> <span class="ow">in</span> <span class="n">bases</span> <span class="o">+</span> <span class="p">(</span><span class="n">new_class</span><span class="p">,)]</span>
+
+        <span class="n">new_class</span><span class="o">.</span><span class="n">write_args</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">write_args</span> <span class="ow">in</span> <span class="n">base_write_args</span><span class="p">:</span>
+            <span class="n">new_class</span><span class="o">.</span><span class="n">write_args</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">write_args</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">new_class</span></div>
+
+
+<div class="viewcode-block" id="DataFrameCache"><a class="viewcode-back" href="../../../api/reslib.data.html#reslib.data.cache.DataFrameCache">[docs]</a><span class="k">class</span> <span class="nc">DataFrameCache</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">ReadWriteArgCopyToDescendants</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for caching intermediate files.</span>
+
+<span class="sd">    Defaults to reading/writing dataset cache with pandas to_csv.</span>
+<span class="sd">    Default write args: sep=&quot;\t&quot;, index=False</span>
+<span class="sd">    Default read args: sep=&quot;\t&quot;</span>
+
+<span class="sd">    Suggested subclassing::</span>
+
+<span class="sd">        class CompustatFUNDA(DataFrameCache):</span>
+<span class="sd">            override_directory = &#39;~/project/data/comp/&#39;</span>
+<span class="sd">            filename &#39;funda&#39;</span>
+
+<span class="sd">            def make_dataset():</span>
+<span class="sd">                # Download funda, return it as dataframe</span>
+<span class="sd">                pass</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#: Full path to the dataset.</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: Override directory to store the dataset in.</span>
+    <span class="n">override_directory</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: Override filename to name the dataset.</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: DataFrame of the data</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># These arguments are copied to all children, so manually overwrite</span>
+    <span class="c1"># in a child class if they don&#39;t apply there.</span>
+    <span class="n">write_args</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;sep&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;index&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+    <span class="n">read_args</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;sep&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">override_filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">delete_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create new cache object. Sets the following attributes:</span>
+
+<span class="sd">          * `filename`: Name of the dataset file. Takes first non-missing from:</span>
+<span class="sd">            1. `override_filename` argument</span>
+<span class="sd">            2. `self.filename`</span>
+<span class="sd">            3. `self.__class__.__name__`</span>
+<span class="sd">          * `path`: Full path to save dataset at. Takes first non-missing from:</span>
+<span class="sd">            1. `self.override_directory`</span>
+<span class="sd">            2. `Config().get(&#39;DATA_DIR_INTERIM&#39;)`</span>
+<span class="sd">            3. `.`</span>
+
+<span class="sd">        Note: setting `override_filename` may be useful for temporarily</span>
+<span class="sd">        creating a new file, e.g. testing out data changes in `make_dataset()`</span>
+<span class="sd">        before overwriting an old version of the cache.</span>
+<span class="sd">        However because the dataset cache location should rarely change, no such</span>
+<span class="sd">        equivalent override is provided for the dataset location.</span>
+<span class="sd">        The location for cache files is best set in the project config file.</span>
+
+<span class="sd">        The default constructor sets the extension, according to the compression</span>
+<span class="sd">        setting, then sets the full path with extension based on compression</span>
+<span class="sd">        and separator type (`sep` argument in `write_args`).</span>
+
+<span class="sd">        The following config options are searched for:</span>
+
+<span class="sd">        `DATA_DIR_INTERIM`: Path to the interim data directory, where the cached</span>
+<span class="sd">            dataset will be stored. This is overridden by `override_directory`</span>
+<span class="sd">            if that attribute is not `None`.</span>
+
+<span class="sd">        `COMPRESSION`: What compression to use, if any, for the cached dataset.</span>
+<span class="sd">            This is overridden by `write_args` and `read_args` if `compression`</span>
+<span class="sd">            is specified in either of them.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            override_filename (str): Filename to write the dataset to,</span>
+<span class="sd">                overriding the default. Ignored if equal to `None`.</span>
+<span class="sd">            delete_cache (bool): Flag to delete cache, if it exists.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># compression = None means no compression.</span>
+        <span class="c1"># So figuring out the preferred compression is a bit verbose below.</span>
+        <span class="n">compression</span> <span class="o">=</span> <span class="n">Config</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;COMPRESSION&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compression</span> <span class="o">=</span> <span class="p">({</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">write_args</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">read_args</span><span class="p">}</span>
+                            <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;compression&#39;</span><span class="p">,</span> <span class="n">compression</span><span class="p">))</span>
+
+        <span class="c1"># Set extension based on write_args separator, default = &#39;,&#39;/.csv</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extension</span> <span class="o">=</span> <span class="s2">&quot;csv&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sep&#39;</span><span class="p">,</span> <span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">extension</span> <span class="o">=</span> <span class="s1">&#39;tab&#39;</span>
+        <span class="c1"># If there&#39;s compression set, add the right extension</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span> <span class="o">==</span> <span class="s1">&#39;gzip&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">extension</span> <span class="o">+=</span> <span class="s1">&#39;.gz&#39;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;bz2&#39;</span><span class="p">,</span> <span class="s1">&#39;zip&#39;</span><span class="p">,</span> <span class="s1">&#39;xz&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">extension</span> <span class="o">+=</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span>
+
+        <span class="k">if</span> <span class="n">override_filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">override_filename</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+
+        <span class="c1"># Set the path, based on Config.DATA_DIR_INTERIM (else .)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">override_directory</span><span class="p">:</span>
+            <span class="n">data_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">override_directory</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data_dir</span> <span class="o">=</span> <span class="n">Config</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;DATA_DIR_INTERIM&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.filename}</span><span class="s1">.</span><span class="si">{self.extension}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">delete_cache</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">delete_cache</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DataFrameCache.make_dataset"><a class="viewcode-back" href="../../../api/reslib.data.html#reslib.data.cache.DataFrameCache.make_dataset">[docs]</a>    <span class="k">def</span> <span class="nf">make_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Make dataset to be saved to cache.</span>
+
+<span class="sd">        Should return a dataframe.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Property accessor for the underlying dataframe.</span>
+<span class="sd">        Loads cached dataframe into memory, calling</span>
+<span class="sd">        `make_dataset()` if no cache is available.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_cached</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">make_dataset</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span>
+
+
+<div class="viewcode-block" id="DataFrameCache.read"><a class="viewcode-back" href="../../../api/reslib.data.html#reslib.data.cache.DataFrameCache.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">read_args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read df from cache, returning &#39;cleaned&#39; df.</span>
+
+<span class="sd">        Calls: _pre_read_hook() before, and _post_read_hook(read_df) after.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            read_args (dict): Dictionary of read-args to be passed to the `read`</span>
+<span class="sd">                function, overriding those specified in `self.read_args`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas.DataFrame: DataFrame which is passed through</span>
+<span class="sd">                `_post_read_hook(df)`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">preread</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pre_read_hook</span><span class="p">()</span>
+
+        <span class="n">read_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read</span><span class="p">(</span><span class="n">preread</span><span class="o">=</span><span class="n">preread</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_post_read_hook</span><span class="p">(</span><span class="n">read_df</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameCache.write"><a class="viewcode-back" href="../../../api/reslib.data.html#reslib.data.cache.DataFrameCache.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">overwrite_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">write_args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write df to cache, returning &#39;cleaned&#39; df.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            df (pandas.DataFrame): DataFrame to be written to disk, using the</span>
+<span class="sd">                `self.write_args` and any override `write_args` if provided.</span>
+<span class="sd">            write_args (dict): Dictionary of any `write_args` which will</span>
+<span class="sd">                override `self.write_args`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">df</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;</span><span class="si">{self.__class__}</span><span class="s2">.write: Requires df input as first argument.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_cached</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">overwrite_cache</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Not writing Data Frame to disk as it already exists.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">df</span>
+
+        <span class="n">prewrite</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pre_write_hook</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">overwrite_cache</span><span class="o">=</span><span class="n">overwrite_cache</span><span class="p">)</span>
+
+        <span class="n">write_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">prewrite</span><span class="p">,</span> <span class="n">original_df</span><span class="o">=</span><span class="n">df</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_post_write_hook</span><span class="p">(</span><span class="n">write_df</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_pre_read_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Used for setting variables/verifying paths etc.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># kwargs = {**self.read_args, **kwargs}</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inner read function.</span>
+<span class="sd">        Can take data from _pre_read_hook via &#39;preread&#39; argument.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">preread</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;preread&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="c1"># Add passed in kwargs to the default read_args.</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">read_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_post_read_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">read_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># kwargs = {**self.read_args, **kwargs}</span>
+        <span class="k">return</span> <span class="n">read_data</span>
+
+    <span class="k">def</span> <span class="nf">_pre_write_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># kwargs = {**self.prewrite_args, **kwargs}</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Writes DataFrame (`df`) to cache if it is not None,</span>
+<span class="sd">        otherwise writes original_df= argument.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">odf</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;original_df&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">df</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">odf</span>
+
+        <span class="k">if</span> <span class="n">df</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;</span><span class="si">{self.__class__}</span><span class="s2">._write: Requires non-null &quot;</span>
+                             <span class="n">f</span><span class="s2">&quot;DataFrame input as first argument.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Add passed in kwargs to the default write_args.</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">write_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">}</span>
+
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="k">def</span> <span class="nf">_post_write_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Runs after _write(), and returns the dataframe.</span>
+
+<span class="sd">        Can be changed to just return df if desired. But this might result in</span>
+<span class="sd">        different DataFrame being returned after the first write versus the</span>
+<span class="sd">        first read.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># kwargs = {**self.write_args, **kwargs}</span>
+        <span class="c1"># return df</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DataFrameCache.delete_cache"><a class="viewcode-back" href="../../../api/reslib.data.html#reslib.data.cache.DataFrameCache.delete_cache">[docs]</a>    <span class="k">def</span> <span class="nf">delete_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Method for deleting cached file if it exists.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="k">pass</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_cached</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Boolean value for whether cached file exists at `path`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Maclean Gaulin
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
