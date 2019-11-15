@@ -177,7 +177,7 @@
 
 
 <span class="sd">Loading the config file:</span>
-<span class="sd">------------------------</span>
+<span class="sd">--------------------------------------------------------------------------------</span>
 <span class="sd">The config can be loaded two ways (three if you count accepting defaults):</span>
 
 <span class="sd">#. The config file can be written as a JSON file, whereby all CAPITAL</span>
@@ -187,13 +187,58 @@
 
 
 <span class="sd">Finding the config file:</span>
-<span class="sd">------------------------</span>
+<span class="sd">--------------------------------------------------------------------------------</span>
 <span class="sd">The config file will be searched for by taking the pwd, and looking for the</span>
 <span class="sd">``file_name`` all the way up the directory tree until it hits the root.</span>
 <span class="sd">If no ``file_name`` is found, the Config object uses some sane default values.</span>
 <span class="sd">These defaults can be seen in the code.</span>
 
 <span class="sd">The file name of the config file defaults to ``reslib.config.[py|json]``.</span>
+
+<span class="sd">Example config file:</span>
+<span class="sd">--------------------------------------------------------------------------------</span>
+
+<span class="sd">An example setup for config is the following directory structure:</span>
+
+<span class="sd">```bash</span>
+<span class="sd">├── project_python_library</span>
+<span class="sd">│   ├── globals.py</span>
+<span class="sd">│   └── __init__.py</span>
+<span class="sd">└── notebooks</span>
+<span class="sd">    └── 0_imports.ipynb</span>
+<span class="sd">```</span>
+
+<span class="sd">Where the `globals.py` file contains:</span>
+
+<span class="sd">```python</span>
+<span class="sd">import os</span>
+<span class="sd">try:</span>
+<span class="sd">    # If importing from reslib.config, config_path is in scope,</span>
+<span class="sd">    # and points to this file</span>
+<span class="sd">    __moduledir = os.path.dirname(os.path.abspath(config_path))</span>
+<span class="sd">except NameError:</span>
+<span class="sd">    # If config_path is missing, then this file is being imported directly,</span>
+<span class="sd">    # so __file__ will exist.</span>
+<span class="sd">    __moduledir = os.path.dirname(os.path.abspath(__file__))</span>
+
+<span class="sd">ROOT_DIR = os.path.abspath(os.path.join(__moduledir, &#39;../&#39;*2))</span>
+
+<span class="sd">DATA_DIR = os.path.join(ROOT_DIR, &#39;data&#39;)</span>
+<span class="sd">DATA_DIR_EXTERNAL = os.path.join(DATA_DIR, &#39;external&#39;)</span>
+<span class="sd">DATA_DIR_INTERIM = os.path.join(DATA_DIR, &#39;interim&#39;)</span>
+<span class="sd">DATA_DIR_FINAL = os.path.join(DATA_DIR, &#39;final&#39;)</span>
+<span class="sd">```</span>
+
+<span class="sd">And the `__init__.py` file contains:</span>
+
+<span class="sd">```python</span>
+<span class="sd">from reslib import config as __config</span>
+<span class="sd">config = __config.Config(&#39;project_python_library/globals.py&#39;)</span>
+<span class="sd">```</span>
+
+<span class="sd">NOTE: Without the `project_python_library/` in the config path, reslib won&#39;t</span>
+<span class="sd">find the globals.py file if it is in the library. If you put the config file</span>
+<span class="sd">outside the library, then you just need `Config(&#39;globals.py&#39;)`.</span>
 
 
 <span class="sd">Removing the Singleton functionality:</span>
@@ -340,6 +385,13 @@
 <span class="sd">        Make a dictionary from a python or json file, based on extension.</span>
 <span class="sd">        Only includes keys which are CAPITALIZED.</span>
 
+<span class="sd">        If using a Python config file, the config file path is added into</span>
+<span class="sd">        global scope for the evaluation with the variable name `config_file`,</span>
+<span class="sd">        meaning in the config.py file, the following will print the full path</span>
+<span class="sd">        to the config.py file::</span>
+
+<span class="sd">            print(config_path)</span>
+
 <span class="sd">        NOTE: A python config file is ``eval``-ed, so this is potentially an</span>
 <span class="sd">        attack vector. Please don&#39;t load a python config file you aren&#39;t</span>
 <span class="sd">        completely comfortable with.</span>
@@ -364,7 +416,7 @@
                 <span class="n">obj</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">ext</span> <span class="o">==</span> <span class="s1">&#39;.py&#39;</span><span class="p">:</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;rb&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
-                <span class="n">obj</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;config_path&#39;</span><span class="p">:</span> <span class="n">config_path</span><span class="p">}</span>
                 <span class="n">exec</span><span class="p">(</span><span class="nb">compile</span><span class="p">(</span><span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">config_path</span><span class="p">,</span> <span class="s2">&quot;exec&quot;</span><span class="p">),</span> <span class="n">obj</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Config file extension unrecognized. Expected &quot;</span>

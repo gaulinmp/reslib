@@ -98,6 +98,7 @@
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Reslib Config (reslib.config)</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#loading-the-config-file">Loading the config file:</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#finding-the-config-file">Finding the config file:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#example-config-file">Example config file:</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#removing-the-singleton-functionality">Removing the Singleton functionality:</a></li>
 </ul>
 </li>
@@ -209,6 +210,48 @@ If no <code class="docutils literal notranslate"><span class="pre">file_name</sp
 These defaults can be seen in the code.</p>
 <p>The file name of the config file defaults to <code class="docutils literal notranslate"><span class="pre">reslib.config.[py|json]</span></code>.</p>
 </div>
+<div class="section" id="example-config-file">
+<h2>Example config file:<a class="headerlink" href="#example-config-file" title="Permalink to this headline">¶</a></h2>
+<p>An example setup for config is the following directory structure:</p>
+<p><a href="#id1"><span class="problematic" id="id2">``</span></a><a href="#id3"><span class="problematic" id="id4">`</span></a>bash
+├── project_python_library
+│   ├── globals.py
+│   └── __init__.py
+└── notebooks</p>
+<blockquote>
+<div><p>└── 0_imports.ipynb</p>
+</div></blockquote>
+<p><a href="#id5"><span class="problematic" id="id6">``</span></a><a href="#id7"><span class="problematic" id="id8">`</span></a></p>
+<p>Where the <cite>globals.py</cite> file contains:</p>
+<p><a href="#id9"><span class="problematic" id="id10">``</span></a><a href="#id11"><span class="problematic" id="id12">`</span></a>python
+import os
+try:</p>
+<blockquote>
+<div><p># If importing from reslib.config, config_path is in scope,
+# and points to this file
+__moduledir = os.path.dirname(os.path.abspath(config_path))</p>
+</div></blockquote>
+<dl class="simple">
+<dt>except NameError:</dt><dd><p># If config_path is missing, then this file is being imported directly,
+# so __file__ will exist.
+__moduledir = os.path.dirname(os.path.abspath(__file__))</p>
+</dd>
+</dl>
+<p>ROOT_DIR = os.path.abspath(os.path.join(__moduledir, ‘../’<a href="#id13"><span class="problematic" id="id14">*</span></a>2))</p>
+<p>DATA_DIR = os.path.join(ROOT_DIR, ‘data’)
+DATA_DIR_EXTERNAL = os.path.join(DATA_DIR, ‘external’)
+DATA_DIR_INTERIM = os.path.join(DATA_DIR, ‘interim’)
+DATA_DIR_FINAL = os.path.join(DATA_DIR, ‘final’)
+<a href="#id15"><span class="problematic" id="id16">``</span></a><a href="#id17"><span class="problematic" id="id18">`</span></a></p>
+<p>And the <cite>__init__.py</cite> file contains:</p>
+<p><code class="docutils literal notranslate"><span class="pre">`python</span>
+<span class="pre">from</span> <span class="pre">reslib</span> <span class="pre">import</span> <span class="pre">config</span> <span class="pre">as</span> <span class="pre">__config</span>
+<span class="pre">config</span> <span class="pre">=</span> <span class="pre">__config.Config('project_python_library/globals.py')</span>
+<span class="pre">`</span></code></p>
+<p>NOTE: Without the <cite>project_python_library/</cite> in the config path, reslib won’t
+find the globals.py file if it is in the library. If you put the config file
+outside the library, then you just need <cite>Config(‘globals.py’)</cite>.</p>
+</div>
 <div class="section" id="removing-the-singleton-functionality">
 <h2>Removing the Singleton functionality:<a class="headerlink" href="#removing-the-singleton-functionality" title="Permalink to this headline">¶</a></h2>
 <p>The Config object is a singleton, meaning there’s only one copy of its data
@@ -258,7 +301,7 @@ I suggest two solutions:</p>
 <dl class="class">
 <dt id="reslib.config.Config">
 <em class="property">class </em><code class="sig-prename descclassname">reslib.config.</code><code class="sig-name descname">Config</code><span class="sig-paren">(</span><em class="sig-param">config_name=None</em>, <em class="sig-param">config_path=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/config.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.config.Config" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>The config object for a project, which has config values as both
 dictionary objects as well as attributes.</p>
 <dl class="method">
@@ -285,6 +328,13 @@ if <code class="docutils literal notranslate"><span class="pre">config_name</spa
 <code class="sig-name descname">_get_dict_from_file</code><span class="sig-paren">(</span><em class="sig-param">config_path</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/config.html#Config._get_dict_from_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.config.Config._get_dict_from_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Make a dictionary from a python or json file, based on extension.
 Only includes keys which are CAPITALIZED.</p>
+<p>If using a Python config file, the config file path is added into
+global scope for the evaluation with the variable name <cite>config_file</cite>,
+meaning in the config.py file, the following will print the full path
+to the config.py file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span>
+</pre></div>
+</div>
 <p>NOTE: A python config file is <code class="docutils literal notranslate"><span class="pre">eval</span></code>-ed, so this is potentially an
 attack vector. Please don’t load a python config file you aren’t
 completely comfortable with.</p>
@@ -303,10 +353,10 @@ completely comfortable with.</p>
 </p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)">dict</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)">dict</a></p>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.7)"><strong>ValueError</strong></a> – If the config file doesn’t have .json or .py extension.</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.8)"><strong>ValueError</strong></a> – If the config file doesn’t have .json or .py extension.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -330,7 +380,7 @@ completely comfortable with.</p>
 <dd class="field-even"><p>Dictionary which was added to the Config object.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)">dict</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)">dict</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -357,12 +407,12 @@ completely comfortable with.</p>
 <dd class="field-even"><p>Dictionary which was added to the Config object.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)">dict</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)">dict</a></p>
 </dd>
 <dt class="field-even">Raises</dt>
 <dd class="field-even"><ul class="simple">
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileNotFoundError" title="(in Python v3.7)"><strong>FileNotFoundError</strong></a> – If file isn’t found, and <code class="docutils literal notranslate"><span class="pre">silent</span></code> is False.</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.7)"><strong>ValueError</strong></a> – If the config file doesn’t have .json or .py extension.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileNotFoundError" title="(in Python v3.8)"><strong>FileNotFoundError</strong></a> – If file isn’t found, and <code class="docutils literal notranslate"><span class="pre">silent</span></code> is False.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.8)"><strong>ValueError</strong></a> – If the config file doesn’t have .json or .py extension.</p></li>
 </ul>
 </dd>
 </dl>
