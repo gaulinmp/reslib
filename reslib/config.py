@@ -21,17 +21,6 @@ Subsequent initialization must happen manually, but will propegate across
 all instances of the config object. See below for a solution if you do not
 want this behavior.
 
-
-Loading the config file:
---------------------------------------------------------------------------------
-The config can be loaded two ways (three if you count accepting defaults):
-
-#. The config file can be written as a JSON file, whereby all CAPITAL
-    keys will be imported into the Config object.
-#. The config file can be written as a Python file, which will be eval-ed
-    and then all CAPITAL keys will be imported into the Config object.
-
-
 Finding the config file:
 --------------------------------------------------------------------------------
 The config file will be searched for by taking the pwd, and looking for the
@@ -41,46 +30,53 @@ These defaults can be seen in the code.
 
 The file name of the config file defaults to ``reslib.config.[py|json]``.
 
+Loading the config file:
+--------------------------------------------------------------------------------
+The config can be loaded two ways (three if you count accepting defaults):
+
+#. JSON
+    The config file can be written as a JSON file, whereby all CAPITAL
+    keys will be imported into the Config object.
+#. Python
+    The config file can be written as a Python file, which will be eval-ed
+    and then all CAPITAL keys will be imported into the Config object.
+
+
+
 Example config file:
 --------------------------------------------------------------------------------
 
-An example setup for config is the following directory structure:
+An example setup for config is the following directory structure::
 
-```bash
-├── project_python_library
-│   ├── globals.py
-│   └── __init__.py
-└── notebooks
-    └── 0_imports.ipynb
-```
+    ├── project_python_library
+    │   ├── globals.py
+    │   └── __init__.py
+    └── notebooks
+        └── 0_imports.ipynb
 
-Where the `globals.py` file contains:
+Where the `globals.py` file contains::
 
-```python
-import os
-try:
-    # If importing from reslib.config, config_path is in scope,
-    # and points to this file
-    __moduledir = os.path.dirname(os.path.abspath(config_path))
-except NameError:
-    # If config_path is missing, then this file is being imported directly,
-    # so __file__ will exist.
-    __moduledir = os.path.dirname(os.path.abspath(__file__))
+    import os
+    try:
+        # If importing from reslib.config, config_path is in scope,
+        # and points to this file
+        __moduledir = os.path.dirname(os.path.abspath(config_path))
+    except NameError:
+        # If config_path is missing, then this file is being imported directly,
+        # so __file__ will exist.
+        __moduledir = os.path.dirname(os.path.abspath(__file__))
 
-ROOT_DIR = os.path.abspath(os.path.join(__moduledir, '../'*2))
+    ROOT_DIR = os.path.abspath(os.path.join(__moduledir, '../'*2))
 
-DATA_DIR = os.path.join(ROOT_DIR, 'data')
-DATA_DIR_EXTERNAL = os.path.join(DATA_DIR, 'external')
-DATA_DIR_INTERIM = os.path.join(DATA_DIR, 'interim')
-DATA_DIR_FINAL = os.path.join(DATA_DIR, 'final')
-```
+    DATA_DIR = os.path.join(ROOT_DIR, 'data')
+    DATA_DIR_EXTERNAL = os.path.join(DATA_DIR, 'external')
+    DATA_DIR_INTERIM = os.path.join(DATA_DIR, 'interim')
+    DATA_DIR_FINAL = os.path.join(DATA_DIR, 'final')
 
-And the `__init__.py` file contains:
+And the `__init__.py` file contains::
 
-```python
-from reslib import config as __config
-config = __config.Config('project_python_library/globals.py')
-```
+    from reslib import config as __config
+    config = __config.Config('project_python_library/globals.py')
 
 NOTE: Without the `project_python_library/` in the config path, reslib won't
 find the globals.py file if it is in the library. If you put the config file
