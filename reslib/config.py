@@ -23,7 +23,7 @@ want this behavior.
 
 
 Loading the config file:
-------------------------
+--------------------------------------------------------------------------------
 The config can be loaded two ways (three if you count accepting defaults):
 
 #. The config file can be written as a JSON file, whereby all CAPITAL
@@ -33,13 +33,58 @@ The config can be loaded two ways (three if you count accepting defaults):
 
 
 Finding the config file:
-------------------------
+--------------------------------------------------------------------------------
 The config file will be searched for by taking the pwd, and looking for the
 ``file_name`` all the way up the directory tree until it hits the root.
 If no ``file_name`` is found, the Config object uses some sane default values.
 These defaults can be seen in the code.
 
 The file name of the config file defaults to ``reslib.config.[py|json]``.
+
+Example config file:
+--------------------------------------------------------------------------------
+
+An example setup for config is the following directory structure:
+
+```bash
+├── project_python_library
+│   ├── globals.py
+│   └── __init__.py
+└── notebooks
+    └── 0_imports.ipynb
+```
+
+Where the `globals.py` file contains:
+
+```python
+import os
+try:
+    # If importing from reslib.config, config_path is in scope,
+    # and points to this file
+    __moduledir = os.path.dirname(os.path.abspath(config_path))
+except NameError:
+    # If config_path is missing, then this file is being imported directly,
+    # so __file__ will exist.
+    __moduledir = os.path.dirname(os.path.abspath(__file__))
+
+ROOT_DIR = os.path.abspath(os.path.join(__moduledir, '../'*2))
+
+DATA_DIR = os.path.join(ROOT_DIR, 'data')
+DATA_DIR_EXTERNAL = os.path.join(DATA_DIR, 'external')
+DATA_DIR_INTERIM = os.path.join(DATA_DIR, 'interim')
+DATA_DIR_FINAL = os.path.join(DATA_DIR, 'final')
+```
+
+And the `__init__.py` file contains:
+
+```python
+from reslib import config as __config
+config = __config.Config('project_python_library/globals.py')
+```
+
+NOTE: Without the `project_python_library/` in the config path, reslib won't
+find the globals.py file if it is in the library. If you put the config file
+outside the library, then you just need `Config('globals.py')`.
 
 
 Removing the Singleton functionality:
@@ -186,6 +231,13 @@ class Config:
         Make a dictionary from a python or json file, based on extension.
         Only includes keys which are CAPITALIZED.
 
+        If using a Python config file, the config file path is added into
+        global scope for the evaluation with the variable name `config_file`,
+        meaning in the config.py file, the following will print the full path
+        to the config.py file::
+
+            print(config_path)
+
         NOTE: A python config file is ``eval``-ed, so this is potentially an
         attack vector. Please don't load a python config file you aren't
         completely comfortable with.
@@ -210,7 +262,7 @@ class Config:
                 obj = json.load(fh)
         elif ext == '.py':
             with open(config_path, mode="rb", **kwargs) as fh:
-                obj = {}
+                obj = {'config_path': config_path}
                 exec(compile(fh.read(), config_path, "exec"), obj)
         else:
             raise ValueError("Config file extension unrecognized. Expected "
