@@ -13,7 +13,6 @@ This module contains the DatasetCache object for reading/writing cached datasets
 # STDlib imports
 import os
 import logging
-# import datetime as dt
 
 # 3rd party package imports
 # import numpy as np
@@ -58,16 +57,14 @@ class ReadWriteArgCopyToDescendants(type):
         new_class = super().__new__(cls, name, bases, attrs)
 
         # Add one of these for each 'dict' you want to copy up the tree
-        base_read_args = [getattr(bc, 'read_args', {})
-                          for bc in bases + (new_class,)]
+        base_read_args = [getattr(bc, "read_args", {}) for bc in bases + (new_class,)]
 
         new_class.read_args = {}
         for read_args in base_read_args:
             new_class.read_args.update(read_args)
 
         # Add one of these for each 'dict' you want to copy up the tree
-        base_write_args = [getattr(bc, 'write_args', {})
-                           for bc in bases + (new_class,)]
+        base_write_args = [getattr(bc, "write_args", {}) for bc in bases + (new_class,)]
 
         new_class.write_args = {}
         for write_args in base_write_args:
@@ -94,6 +91,7 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
                 # Download funda, return it as dataframe
                 pass
     """
+
     #: Full path to the dataset.
     path = None
     #: Override directory to store the dataset in.
@@ -105,8 +103,8 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
 
     # These arguments are copied to all children, so manually overwrite
     # in a child class if they don't apply there.
-    write_args = {'sep': '\t', 'index': False}
-    read_args = {'sep': '\t'}
+    write_args = {"sep": "\t", "index": False}
+    read_args = {"sep": "\t"}
 
     def __init__(self, override_filename=None, delete_cache=False):
         """
@@ -149,19 +147,18 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
         """
         # compression = None means no compression.
         # So figuring out the preferred compression is a bit verbose below.
-        compression = Config().get('COMPRESSION', None)
-        self.compression = ({**self.write_args, **self.read_args}
-                            .get('compression', compression))
+        compression = Config().get("COMPRESSION", None)
+        self.compression = {**self.write_args, **self.read_args}.get("compression", compression)
 
         # Set extension based on write_args separator, default = ','/.csv
         self.extension = "csv"
-        if self.write_args.get('sep', ',') == '\t':
-            self.extension = 'tab'
+        if self.write_args.get("sep", ",") == "\t":
+            self.extension = "tab"
         # If there's compression set, add the right extension
-        if self.compression == 'gzip':
-            self.extension += '.gz'
-        elif self.compression in ('bz2', 'zip', 'xz'):
-            self.extension += '.' + self.compression
+        if self.compression == "gzip":
+            self.extension += ".gz"
+        elif self.compression in ("bz2", "zip", "xz"):
+            self.extension += "." + self.compression
 
         if override_filename is not None:
             self.filename = override_filename
@@ -172,8 +169,8 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
         if self.override_directory:
             data_dir = self.override_directory
         else:
-            data_dir = Config().get('DATA_DIR_INTERIM', '.')
-        self.path = os.path.join(data_dir, f'{self.filename}.{self.extension}')
+            data_dir = Config().get("DATA_DIR_INTERIM", ".")
+        self.path = os.path.join(data_dir, f"{self.filename}.{self.extension}")
 
         if delete_cache:
             self.delete_cache()
@@ -200,7 +197,6 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
             self.df = self.read()
 
         return self.df
-
 
     def read(self, read_args=None):
         """
@@ -257,7 +253,7 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
         Inner read function.
         Can take data from _pre_read_hook via 'preread' argument.
         """
-        preread = kwargs.pop('preread', None)
+        preread = kwargs.pop("preread", None)
 
         # Add passed in kwargs to the default read_args.
         kwargs = {**self.read_args, **kwargs}
@@ -277,13 +273,12 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
         Writes DataFrame (`df`) to cache if it is not None,
         otherwise writes original_df= argument.
         """
-        odf = kwargs.pop('original_df', None)
+        odf = kwargs.pop("original_df", None)
         if df is None:
             df = odf
 
         if df is None:
-            raise ValueError(f"{self.__class__}._write: Requires non-null "
-                             f"DataFrame input as first argument.")
+            raise ValueError(f"{self.__class__}._write: Requires non-null DataFrame input as first argument.")
 
         # Add passed in kwargs to the default write_args.
         kwargs = {**self.write_args, **kwargs}

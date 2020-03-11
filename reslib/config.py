@@ -129,13 +129,14 @@ import json
 
 logger = logging.getLogger(__name__)
 
+
 class Config:
     """
     The config object for a project, which has config values as both
     dictionary objects as well as attributes.
     """
 
-    __borg_data = {} # http://code.activestate.com/recipes/66531/
+    __borg_data = {}  # http://code.activestate.com/recipes/66531/
     __is_initialized = False
 
     def __init__(self, config_name=None, config_path=None, **kwargs):
@@ -178,27 +179,23 @@ class Config:
             self.__is_initialized = True
             logger.info("\tDone initialization: %r", self)
 
-
     def get(self, *key_and_default, **default_maybe):
-        if len(key_and_default) == 1 and 'default' not in default_maybe:
+        if len(key_and_default) == 1 and "default" not in default_maybe:
             return self[key_and_default[0]]
         if len(key_and_default) == 1:
-            return getattr(key_and_default[0], default_maybe['default'])
+            return getattr(key_and_default[0], default_maybe["default"])
         return getattr(self, *key_and_default)
-
 
     def __getitem__(self, key):
         return getattr(self, key)
 
-
     def __setitem__(self, key, value):
         setattr(self, key, value)
 
-
     def __repr__(self):
         return "Config loaded from: {}\nKeys: {}".format(
-            self.config_path, [k for k in self.__dict__.keys() if k.isupper()])
-
+            self.config_path, [k for k in self.__dict__.keys() if k.isupper()]
+        )
 
     def _get_config_path(self, config_name="reslib.config"):
         """
@@ -217,7 +214,7 @@ class Config:
             Path of the found config file, or None.
         """
         if config_name is None:
-            config_name="reslib.config"
+            config_name = "reslib.config"
 
         extension_order = ("", ".json", ".py")
 
@@ -231,7 +228,7 @@ class Config:
                 check_path = os.path.join(this_dir, config_name + ext)
                 if os.path.exists(check_path):
                     return check_path
-                logging.debug("Can't find %r in %r", config_name+ext, check_path)
+                logging.debug("Can't find %r%r in %r", config_name, ext, check_path)
 
             last_dir, this_dir = this_dir, os.path.dirname(this_dir)
 
@@ -266,20 +263,19 @@ class Config:
         ext = os.path.splitext(config_path)[-1]
 
         # Load json
-        if ext == '.json':
+        if ext == ".json":
             logger.debug("Loading json dict file from %r", config_path)
             with open(config_path, mode="r", **kwargs) as fh:
                 obj = json.load(fh)
-        elif ext == '.py':
+        elif ext == ".py":
             logger.debug("Loading python dict file from %r", config_path)
             with open(config_path, mode="rb", **kwargs) as fh:
-                obj = {'config_path': config_path}
+                obj = {"config_path": config_path}
                 exec(compile(fh.read(), config_path, "exec"), obj)
         else:
-            raise ValueError("Config file extension unrecognized. Expected "
-                             ".json or .py, got %s", ext)
+            raise ValueError("Config file extension unrecognized. Expected .json or .py, got %s", ext)
 
-        return {k:v for k,v in obj.items() if k.isupper()}
+        return {k: v for k, v in obj.items() if k.isupper()}
 
     def _populate_from_file(self, config_path=None, silent=False, **kwargs):
         """
@@ -327,7 +323,7 @@ class Config:
             dict: Dictionary which was added to the Config object.
         """
         obj = {}
-        for k,v in config_dict.items():
+        for k, v in config_dict.items():
             if k.isupper():
                 self[k] = obj[k] = v
 
