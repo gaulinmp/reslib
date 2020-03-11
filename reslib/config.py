@@ -54,7 +54,7 @@ An example setup for config is the following directory structure::
     └── notebooks
         └── 0_imports.ipynb
 
-Where the `globals.py` file contains::
+Where the ``globals.py`` file contains::
 
     import os
     try:
@@ -73,12 +73,12 @@ Where the `globals.py` file contains::
     DATA_DIR_INTERIM = os.path.join(DATA_DIR, 'interim')
     DATA_DIR_FINAL = os.path.join(DATA_DIR, 'final')
 
-And the `__init__.py` file contains::
+And the ``__init__.py`` file contains::
 
     from reslib import config as __config
     config = __config.Config('project_python_library/globals.py')
 
-NOTE: Without the `project_python_library/` in the config path, reslib won't
+NOTE: Without the ``project_python_library/`` in the config path, reslib won't
 find the globals.py file if it is in the library. If you put the config file
 outside the library, then you just need `Config('globals.py')`.
 
@@ -97,15 +97,17 @@ in memory (effectively). Below is an example of what this means::
     print(config['NEW_VAR'])
     # --> 'new value'
 
-    # other_name_ignored.py -- doesn't run
+    # other_name_ignored.py -- doesn't get read
     NEW_VAR = 'ignored var'
 
 If you wish to have multiple configs for multiple parts of your program,
 I suggest two solutions:
 
-    #. Manual prefixing: PARTA_ROOT_PATH = 'folder for part A/data/'
-    #. Make your own config object. Inherit this object with just an
-        ``def __init__``, but drop the: self.__dict__ = self.__borg_data::
+    #. Manual prefixing:
+        PARTA_ROOT_PATH = 'folder for part A/data/'
+    #. Subclassing:
+        Make your own config object. Inherit this object with just
+        ``def __init__``, but omit the: ``self.__dict__ = self.__borg_data``::
 
             class MultiConfig(reslib.config.Config):
                 def __init__(self, config_name=None, config_path=None, **kwargs):
@@ -156,16 +158,25 @@ class Config:
         self.__dict__ = self.__borg_data
 
         if not self.__is_initialized:
+            logger.debug("Config loading.")
+
             # Set the config_path based on input arguments (or default)
             self.config_path = config_path or self._get_config_path(config_name)
+            logger.debug("\tconfig_name: %s", config_name)
+            logger.debug("\tconfig_path: %s", config_path)
+            logger.debug("\tself.config_path: %s", self.config_path)
 
             # Load config file if found
             self._populate_from_file(self.config_path, silent=True)
+            logger.debug("\tLoaded from file: %r", self)
 
             # Load overrides (does nothing if none provided)
             self._populate_from_dict(kwargs)
+            if kwargs:
+                logger.debug("\tLoaded from kwargs: %r", kwargs)
 
             self.__is_initialized = True
+            logger.info("\tDone initialization: %r", self)
 
 
     def get(self, *key_and_default, **default_maybe):
@@ -212,6 +223,7 @@ class Config:
 
         last_dir = None
         this_dir = os.path.abspath(config_name)
+        logging.debug("Searching this_dir: %r", this_dir)
 
         while last_dir != this_dir:
             # Search dir for config_name (then plus extensions)
@@ -219,6 +231,7 @@ class Config:
                 check_path = os.path.join(this_dir, config_name + ext)
                 if os.path.exists(check_path):
                     return check_path
+                logging.debug("Can't find %r in %r", config_name+ext, check_path)
 
             last_dir, this_dir = this_dir, os.path.dirname(this_dir)
 
@@ -254,9 +267,11 @@ class Config:
 
         # Load json
         if ext == '.json':
+            logger.debug("Loading json dict file from %r", config_path)
             with open(config_path, mode="r", **kwargs) as fh:
                 obj = json.load(fh)
         elif ext == '.py':
+            logger.debug("Loading python dict file from %r", config_path)
             with open(config_path, mode="rb", **kwargs) as fh:
                 obj = {'config_path': config_path}
                 exec(compile(fh.read(), config_path, "exec"), obj)
