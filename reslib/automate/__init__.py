@@ -24,7 +24,7 @@ def cleanpath(path_to_clean, re_pathsep=_re.compile(r"[\\]+"), re_dotstart=_re.c
     """Clean a path by replacing ``\\\\`` with ``/``, and removing beginning ``./`` and trailing ``/``"""
     if path_to_clean is None:
         return None
-    return re_dotstart.sub("", re_pathsep.sub("/", str(path_to_clean)))
+    return re_dotstart.sub("", re_pathsep.sub("/", str(path_to_clean))).strip()
 
 
 def pathjoin(*paths):
