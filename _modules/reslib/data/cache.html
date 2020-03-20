@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>reslib.data.cache &mdash; Research Library 0.0.01 documentation</title>
+  <title>reslib.data.cache &mdash; Research Library 0.0.2 documentation</title>
   
 
   
@@ -21,10 +21,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../../_static/doctools.js"></script>
-        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
     
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
@@ -58,7 +58,7 @@
             
             
               <div class="version">
-                0.0.01
+                0.0.2
               </div>
             
           
@@ -167,14 +167,13 @@
 <span class="c1"># STDlib imports</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="c1"># import datetime as dt</span>
 
 <span class="c1"># 3rd party package imports</span>
 <span class="c1"># import numpy as np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
 <span class="c1"># project imports</span>
-<span class="kn">from</span> <span class="nn">reslib.config</span> <span class="k">import</span> <span class="n">Config</span>
+<span class="kn">from</span> <span class="nn">reslib.config</span> <span class="kn">import</span> <span class="n">Config</span>
 
 
 <span class="c1"># Local logger</span>
@@ -208,20 +207,18 @@
 <span class="sd">        assert Kid().write_args == {&#39;sep&#39;: &#39;,&#39;}</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
         <span class="n">new_class</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
 
         <span class="c1"># Add one of these for each &#39;dict&#39; you want to copy up the tree</span>
-        <span class="n">base_read_args</span> <span class="o">=</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">bc</span><span class="p">,</span> <span class="s1">&#39;read_args&#39;</span><span class="p">,</span> <span class="p">{})</span>
-                          <span class="k">for</span> <span class="n">bc</span> <span class="ow">in</span> <span class="n">bases</span> <span class="o">+</span> <span class="p">(</span><span class="n">new_class</span><span class="p">,)]</span>
+        <span class="n">base_read_args</span> <span class="o">=</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">bc</span><span class="p">,</span> <span class="s2">&quot;read_args&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="k">for</span> <span class="n">bc</span> <span class="ow">in</span> <span class="n">bases</span> <span class="o">+</span> <span class="p">(</span><span class="n">new_class</span><span class="p">,)]</span>
 
         <span class="n">new_class</span><span class="o">.</span><span class="n">read_args</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">read_args</span> <span class="ow">in</span> <span class="n">base_read_args</span><span class="p">:</span>
             <span class="n">new_class</span><span class="o">.</span><span class="n">read_args</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">read_args</span><span class="p">)</span>
 
         <span class="c1"># Add one of these for each &#39;dict&#39; you want to copy up the tree</span>
-        <span class="n">base_write_args</span> <span class="o">=</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">bc</span><span class="p">,</span> <span class="s1">&#39;write_args&#39;</span><span class="p">,</span> <span class="p">{})</span>
-                           <span class="k">for</span> <span class="n">bc</span> <span class="ow">in</span> <span class="n">bases</span> <span class="o">+</span> <span class="p">(</span><span class="n">new_class</span><span class="p">,)]</span>
+        <span class="n">base_write_args</span> <span class="o">=</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">bc</span><span class="p">,</span> <span class="s2">&quot;write_args&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="k">for</span> <span class="n">bc</span> <span class="ow">in</span> <span class="n">bases</span> <span class="o">+</span> <span class="p">(</span><span class="n">new_class</span><span class="p">,)]</span>
 
         <span class="n">new_class</span><span class="o">.</span><span class="n">write_args</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">write_args</span> <span class="ow">in</span> <span class="n">base_write_args</span><span class="p">:</span>
@@ -248,6 +245,7 @@
 <span class="sd">                # Download funda, return it as dataframe</span>
 <span class="sd">                pass</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="c1">#: Full path to the dataset.</span>
     <span class="n">path</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1">#: Override directory to store the dataset in.</span>
@@ -259,10 +257,10 @@
 
     <span class="c1"># These arguments are copied to all children, so manually overwrite</span>
     <span class="c1"># in a child class if they don&#39;t apply there.</span>
-    <span class="n">write_args</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;sep&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;index&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
-    <span class="n">read_args</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;sep&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">}</span>
+    <span class="n">write_args</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;sep&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+    <span class="n">read_args</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;sep&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">}</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">override_filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">delete_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">override_filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">delete_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create new cache object. Sets the following attributes:</span>
 
@@ -303,19 +301,18 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># compression = None means no compression.</span>
         <span class="c1"># So figuring out the preferred compression is a bit verbose below.</span>
-        <span class="n">compression</span> <span class="o">=</span> <span class="n">Config</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;COMPRESSION&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">compression</span> <span class="o">=</span> <span class="p">({</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">write_args</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">read_args</span><span class="p">}</span>
-                            <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;compression&#39;</span><span class="p">,</span> <span class="n">compression</span><span class="p">))</span>
+        <span class="n">compression</span> <span class="o">=</span> <span class="n">Config</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;COMPRESSION&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compression</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">write_args</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">read_args</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;compression&quot;</span><span class="p">,</span> <span class="n">compression</span><span class="p">)</span>
 
         <span class="c1"># Set extension based on write_args separator, default = &#39;,&#39;/.csv</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">extension</span> <span class="o">=</span> <span class="s2">&quot;csv&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sep&#39;</span><span class="p">,</span> <span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">extension</span> <span class="o">=</span> <span class="s1">&#39;tab&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sep&quot;</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">extension</span> <span class="o">=</span> <span class="s2">&quot;tab&quot;</span>
         <span class="c1"># If there&#39;s compression set, add the right extension</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span> <span class="o">==</span> <span class="s1">&#39;gzip&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">extension</span> <span class="o">+=</span> <span class="s1">&#39;.gz&#39;</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;bz2&#39;</span><span class="p">,</span> <span class="s1">&#39;zip&#39;</span><span class="p">,</span> <span class="s1">&#39;xz&#39;</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">extension</span> <span class="o">+=</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span> <span class="o">==</span> <span class="s2">&quot;gzip&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">extension</span> <span class="o">+=</span> <span class="s2">&quot;.gz&quot;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;bz2&quot;</span><span class="p">,</span> <span class="s2">&quot;zip&quot;</span><span class="p">,</span> <span class="s2">&quot;xz&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">extension</span> <span class="o">+=</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span>
 
         <span class="k">if</span> <span class="n">override_filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">override_filename</span>
@@ -326,8 +323,8 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">override_directory</span><span class="p">:</span>
             <span class="n">data_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">override_directory</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">data_dir</span> <span class="o">=</span> <span class="n">Config</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;DATA_DIR_INTERIM&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.filename}</span><span class="s1">.</span><span class="si">{self.extension}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">data_dir</span> <span class="o">=</span> <span class="n">Config</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;DATA_DIR_INTERIM&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">extension</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">delete_cache</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">delete_cache</span><span class="p">()</span>
@@ -354,7 +351,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span>
-
 
 <div class="viewcode-block" id="DataFrameCache.read"><a class="viewcode-back" href="../../../api/reslib.data.html#reslib.data.cache.DataFrameCache.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">read_args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -387,7 +383,7 @@
 <span class="sd">                override `self.write_args`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">df</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;</span><span class="si">{self.__class__}</span><span class="s2">.write: Requires df input as first argument.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2">.write: Requires df input as first argument.&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_cached</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">overwrite_cache</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Not writing Data Frame to disk as it already exists.&quot;</span><span class="p">)</span>
@@ -411,7 +407,7 @@
 <span class="sd">        Inner read function.</span>
 <span class="sd">        Can take data from _pre_read_hook via &#39;preread&#39; argument.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">preread</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;preread&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">preread</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;preread&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
         <span class="c1"># Add passed in kwargs to the default read_args.</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">read_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">}</span>
@@ -431,13 +427,12 @@
 <span class="sd">        Writes DataFrame (`df`) to cache if it is not None,</span>
 <span class="sd">        otherwise writes original_df= argument.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">odf</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;original_df&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">odf</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;original_df&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">df</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">df</span> <span class="o">=</span> <span class="n">odf</span>
 
         <span class="k">if</span> <span class="n">df</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;</span><span class="si">{self.__class__}</span><span class="s2">._write: Requires non-null &quot;</span>
-                             <span class="n">f</span><span class="s2">&quot;DataFrame input as first argument.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2">._write: Requires non-null DataFrame input as first argument.&quot;</span><span class="p">)</span>
 
         <span class="c1"># Add passed in kwargs to the default write_args.</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">write_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">}</span>

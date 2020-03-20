@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>reslib.automate package &mdash; Research Library 0.0.01 documentation</title>
+  <title>reslib.automate package &mdash; Research Library 0.0.2 documentation</title>
   
 
   
@@ -21,10 +21,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -60,7 +60,7 @@
             
             
               <div class="version">
-                0.0.01
+                0.0.2
               </div>
             
           
@@ -247,6 +247,18 @@
 <dd class="field-even"><p>MIT, see LICENSE for more details.</p>
 </dd>
 </dl>
+<dl class="function">
+<dt id="reslib.automate.cleanpath">
+<code class="sig-prename descclassname">reslib.automate.</code><code class="sig-name descname">cleanpath</code><span class="sig-paren">(</span><em class="sig-param">path_to_clean</em>, <em class="sig-param">re_pathsep=re.compile('[\\\\]+')</em>, <em class="sig-param">re_dotstart=re.compile('^./|/$')</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/automate.html#cleanpath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.automate.cleanpath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean a path by replacing <code class="docutils literal notranslate"><span class="pre">\\</span></code> with <code class="docutils literal notranslate"><span class="pre">/</span></code>, and removing beginning <code class="docutils literal notranslate"><span class="pre">./</span></code> and trailing <code class="docutils literal notranslate"><span class="pre">/</span></code></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="reslib.automate.pathjoin">
+<code class="sig-prename descclassname">reslib.automate.</code><code class="sig-name descname">pathjoin</code><span class="sig-paren">(</span><em class="sig-param">*paths</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/automate.html#pathjoin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.automate.pathjoin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Join, normalize, and clean a list of paths, allowing for <a href="#id1"><span class="problematic" id="id2">``</span></a>None``s (filtered out)</p>
+</dd></dl>
+
 </div>
 </div>
 </div>

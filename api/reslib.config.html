@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Reslib Config (reslib.config) &mdash; Research Library 0.0.01 documentation</title>
+  <title>Reslib Config (reslib.config) &mdash; Research Library 0.0.2 documentation</title>
   
 
   
@@ -21,10 +21,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.0.01
+                0.0.2
               </div>
             
           
@@ -222,7 +222,7 @@ and then all CAPITAL keys will be imported into the Config object.</p>
     └── 0_imports.ipynb
 </pre></div>
 </div>
-<p>Where the <cite>globals.py</cite> file contains:</p>
+<p>Where the <code class="docutils literal notranslate"><span class="pre">globals.py</span></code> file contains:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="c1"># If importing from reslib.config, config_path is in scope,</span>
@@ -241,12 +241,12 @@ and then all CAPITAL keys will be imported into the Config object.</p>
 <span class="n">DATA_DIR_FINAL</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_DIR</span><span class="p">,</span> <span class="s1">&#39;final&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>And the <cite>__init__.py</cite> file contains:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">reslib</span> <span class="k">import</span> <span class="n">config</span> <span class="k">as</span> <span class="n">__config</span>
+<p>And the <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code> file contains:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">reslib</span> <span class="kn">import</span> <span class="n">config</span> <span class="k">as</span> <span class="n">__config</span>
 <span class="n">config</span> <span class="o">=</span> <span class="n">__config</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="s1">&#39;project_python_library/globals.py&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>NOTE: Without the <cite>project_python_library/</cite> in the config path, reslib won’t
+<p>NOTE: Without the <code class="docutils literal notranslate"><span class="pre">project_python_library/</span></code> in the config path, reslib won’t
 find the globals.py file if it is in the library. If you put the config file
 outside the library, then you just need <cite>Config(‘globals.py’)</cite>.</p>
 </div>
@@ -263,7 +263,7 @@ in memory (effectively). Below is an example of what this means:</p>
 <span class="nb">print</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;NEW_VAR&#39;</span><span class="p">])</span>
 <span class="c1"># --&gt; &#39;new value&#39;</span>
 
-<span class="c1"># other_name_ignored.py -- doesn&#39;t run</span>
+<span class="c1"># other_name_ignored.py -- doesn&#39;t get read</span>
 <span class="n">NEW_VAR</span> <span class="o">=</span> <span class="s1">&#39;ignored var&#39;</span>
 </pre></div>
 </div>
@@ -271,11 +271,16 @@ in memory (effectively). Below is an example of what this means:</p>
 I suggest two solutions:</p>
 <blockquote>
 <div><ol class="arabic">
-<li><p>Manual prefixing: PARTA_ROOT_PATH = ‘folder for part A/data/’</p></li>
+<li><dl class="simple">
+<dt>Manual prefixing:</dt><dd><p>PARTA_ROOT_PATH = ‘folder for part A/data/’</p>
+</dd>
+</dl>
+</li>
 <li><dl>
-<dt>Make your own config object. Inherit this object with just an</dt><dd><p><code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">__init__</span></code>, but drop the: self.__dict__ = self.__borg_data:</p>
+<dt>Subclassing:</dt><dd><p>Make your own config object. Inherit this object with just
+<code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">__init__</span></code>, but omit the: <code class="docutils literal notranslate"><span class="pre">self.__dict__</span> <span class="pre">=</span> <span class="pre">self.__borg_data</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MultiConfig</span><span class="p">(</span><span class="n">reslib</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">Config</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">config_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">config_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">dict</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargs</span> <span class="ow">or</span> <span class="p">{})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config_path</span> <span class="o">=</span> <span class="n">config_path</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_config_path</span><span class="p">(</span><span class="n">config_name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_populate_from_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config_path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
