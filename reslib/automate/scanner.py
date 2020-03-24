@@ -64,31 +64,31 @@ class DependencyScanner:
 
     Examples:
 
-        Assume the following three files exist in the ~/projects/example folder::
+        Assume the following three files exist in the ``~/projects/example folder``:
 
-            '''code/data.sas
+        ```code/data.sas
             /* INPUT: funda.sas7bdat */
-            PROC EXPORT DATA=funda OUTFILE= "../data/stata_data.dta"; RUN;
+            PROC EXPORT DATA=funda OUTFILE= "data/stata_data.dta"; RUN;
             /* OUTPUT: stata_data.dta */
-            '''
+        ```
 
-            '''code/load_data.do
-            /* INPUT: stata_data.sas7bdat */
-            use data/stata_data.dta
-            '''
+        ```code/load_data.do
+            /* INPUT: stata_data.dta */
+            use "data/stata_data.dta"
+        ```
 
-            '''code/analysis.do
+        ```code/analysis.do
             /* INPUT_FILE: load_data.do */
-            do code/load_data
-            '''
+            do "code/load_data.do"
+        ```
 
         Then the following would create a graph output at pipeline.pdf::
 
-            from reslib.automate.code_scanner import DependencyScanner, SAS, Stata
+            from reslib.automate import DependencyScanner
 
             # Just scan for SAS and Stata code, located in the code directory.
-            ds = DependencyScanner(SAS, Stata, project_root='~/projects/example/',
-                                code_path_prefix='code', data_path_prefix='data')
+            ds = DependencyScanner(project_root='~/projects/example/',
+                                  code_path_prefix='code', data_path_prefix='data')
             print(ds)
             ds.DAG_to_file("pipeline.pdf")
 
@@ -119,7 +119,9 @@ class DependencyScanner:
         self.code_path_prefix = code_path_prefix
         self.data_path_prefix = data_path_prefix
 
-        if not os.path.isabs(self.project_root):
+        if '~' in self.project_root:
+            self.project_root = os.path.expanduser(self.project_root)
+        elif not os.path.isabs(self.project_root):
             self.project_root = os.path.abspath(self.project_root)
 
         # Take override parser list if provided
