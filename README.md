@@ -5,13 +5,6 @@ It is a hodgepodge of functionality, with the aim of asymptoting to coherence.
 
 This software is provided as is, hopefully it's useful!
 
-Overview:
-   * `reslib`:
-
-
-## Data in Python
-TODO: Fill this out
-
 
 ## Dependency tracking
 One central tenant of good research is that it be repeatable.
