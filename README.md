@@ -37,7 +37,7 @@ Assume the following three files exist in the ~/projects/example folder:
     do "code/load_data.do"
 ```
 
-Then the following would create a graph output at pipeline.pdf::
+Then the following would create a graph output at ``pipeline.png``::
 
 ```python
     from reslib.automate import DependencyScanner, SAS, Stata
@@ -46,7 +46,7 @@ Then the following would create a graph output at pipeline.pdf::
     ds = DependencyScanner(project_root='~/projects/example/',
                            code_path_prefix='code', data_path_prefix='data')
     print(ds)
-    ds.DAG_to_file("pipeline.pdf")
+    ds.DAG_to_file("pipeline.png")
 ```
 
 will print the following:
@@ -79,7 +79,9 @@ Sas:: data.sas
         Data Prefix: data
 ```
 
-And create ``pipeline.pdf`` with the DAG graphed.
+And create ``pipeline.png`` with the DAG graphed:
+
+![pipeline.png](docs/_static/pipeline.png)
 
 
 The ``DependencyScanner`` has many settings, the salient ones being:
