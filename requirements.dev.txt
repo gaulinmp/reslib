@@ -12,7 +12,5 @@ sphinx-rtd-theme
 ############## Version specific ##############
 
 ############## Github Imports ################
-# -e git://github.com/gaulinmp/pyedgar.git#egg=pyedgar
-# pip install git+https://github.com/gaulinmp/pyedgar.git#egg=pyedgar
 
 ############## Suggested ####################

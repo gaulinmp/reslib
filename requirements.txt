@@ -1,14 +1,10 @@
 ############## Not version specific ##############
-# seaborn
+graphviz
+networkx
+pydot
 
 ############## Version specific ##############
 pandas>=0.22.0
-
-############## Github Imports ################
-# -e git://github.com/gaulinmp/pyedgar.git#egg=pyedgar
-# pip install git+https://github.com/gaulinmp/pyedgar.git#egg=pyedgar
--e git://github.com/pydoit/doit.git#egg=doit
-# pip install git+https://github.com/pydoit/doit.git#egg=doit
 
 ############## Suggested ####################
 # tqdm
@@ -20,4 +16,3 @@ pandas>=0.22.0
 # sqlite
 # psycopg2
 # sas7bdat
-# -r requirements.dev.txt

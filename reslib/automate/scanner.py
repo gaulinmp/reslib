@@ -24,16 +24,25 @@ This stemmed from ``doit graph``, but I wanted more flexibility.
 import os
 import re
 import logging
+from io import StringIO
+
+# Local logger
+logger = logging.getLogger(__name__)
 
 # 3rd party package imports
+try:
+    import networkx as nx
+except ModuleNotFoundError:
+    logger.warning("NetworkX library not found, DAG functionality unavailable.")
+try:
+    from graphviz import Source
+except ModuleNotFoundError:
+    logger.warning("Graphviz library not found, DAG plotting unavailable.")
 
 # project imports
 from reslib.automate import cleanpath as _clnpth
 from reslib.automate import pathjoin as _pthjoin
 from reslib.automate.code_parser import SAS, Stata, Notebook, Python
-
-# Local logger
-logger = logging.getLogger(__name__)
 
 
 class DependencyScanner:
@@ -47,25 +56,59 @@ class DependencyScanner:
             ```os.path.join(project_root, data_path_prefix, relative_data_path_from_comment)```.
         parser_list: List of ``CodeParser`` subclass objects (not instances!).
         scanned_code: Result list of scanned ``CodeParser`` instances.
+        default_dot_attributes: Tuple of lines to be added to the .dot file output.
 
      Private Attributes:
+        _scanned_code: List of scanned ``CodeParser`` instances.
         _ignore_folders: Set of folders (thus also sub-folders) to ignore.
 
-    Example usage::
+    Examples:
 
-        from reslib.automate.code_scanner import DependencyScanner, SAS, Stata
+        Assume the following three files exist in the ~/projects/example folder::
 
-        # Just scan for SAS and Stata code, located in the code directory.
-        ds = DependencyScanner(SAS, Stata, project_root='~/projects/project1/', code_path_prefix='code', )
-        list_of_dependency_dicts = ds.scan()
+            '''code/data.sas
+            /* INPUT: funda.sas7bdat */
+            PROC EXPORT DATA=funda OUTFILE= "../data/stata_data.dta"; RUN;
+            /* OUTPUT: stata_data.dta */
+            '''
 
-        print(list_of_dependency_dicts[0])
+            '''code/load_data.do
+            /* INPUT: stata_data.sas7bdat */
+            use data/stata_data.dta
+            '''
+
+            '''code/analysis.do
+            /* INPUT_FILE: load_data.do */
+            do code/load_data
+            '''
+
+        Then the following would create a graph output at pipeline.pdf::
+
+            from reslib.automate.code_scanner import DependencyScanner, SAS, Stata
+
+            # Just scan for SAS and Stata code, located in the code directory.
+            ds = DependencyScanner(SAS, Stata, project_root='~/projects/example/',
+                                code_path_prefix='code', data_path_prefix='data')
+            print(ds)
+            ds.DAG_to_file("pipeline.pdf")
+
+        Alternatively, a one-liner on the commandline:
+
+            python -c "from reslib.automate import *;DependencyScanner(code_path_prefix='data', data_path_prefix='code').DAG_to_file('pipeline')"
     """
 
     #: List of Parsers to check against cost. Defaults to [SAS, Stata, Notebook, Python]
     parser_list = None
-    #: Results of scanning
-    scanned_code = None
+    #: Default attributes to add to the .dot file output.
+    default_dot_attributes = {"graph": ["rankdir=LR"], "node": ["style=filled"], "edge": ["arrowsize=1.5"]}
+
+    #: Orphaned node color
+    _file_node_color = "seagreen3"
+    #: Orphaned node color
+    _orphan_node_color = "gold"
+
+    #: Private esults of scanning
+    _scanned_code = None
 
     # Private attributes
     _ignore_folders = {".git", ".ipynb_checkpoints", "__pycache__"}
@@ -91,7 +134,14 @@ class DependencyScanner:
         if ignore_folders is not None:
             self._ignore_folders = set(ignore_folders)
 
-        self.scanned_code = None
+        self._scanned_code = None
+
+    def __str__(self):
+        return "\n".join([str(r) for r in self.scanned_code])
+
+    @property
+    def scanned_code(self):
+        return self._scanned_code or self.scan()
 
     def scan(self):
         """
@@ -109,7 +159,7 @@ class DependencyScanner:
             input_datasets
             output_datasets
         """
-        self.scanned_code = []
+        self._scanned_code = []
 
         start_dir = self.project_root
         if self.code_path_prefix is not None:
@@ -133,15 +183,109 @@ class DependencyScanner:
                     )
 
                     if res.is_parsed:
-                        self.scanned_code.append(res)
+                        self._scanned_code.append(res)
 
                     break  # break out of parser_list, we found our match
 
-        return self.scanned_code
+        return self._scanned_code
 
-    def DAG(self):
-        if self.scanned_code is None:
-            self.scan()
+    def DAG(self, color_orphans=True, trim_dangling_data_nodes=True):
+        """Create the Directed Acyclic Graph (DAG) for the codebase.
 
-        for r in self.scanned_code:
-            print(r, '\n')
+        Returns:
+            networkx.DiGraph: DiGraph of the codebase, represented in networkX format.
+        """
+        G = nx.DiGraph()
+
+        def add_file_node(file_node_or_list, color=None, shape="note"):
+            if isinstance(file_node_or_list, str):
+                file_node_or_list = [file_node_or_list]
+            G.add_nodes_from(file_node_or_list, color=color or self._file_node_color, shape=shape, _type="file")
+
+        def add_data_node(data_node):
+            if data_node not in G:
+                G.add_node(data_node, _type="dataset")
+
+        # First add the scanned files themselves
+        add_file_node([code.path_relative for code in self.scanned_code])
+
+        # Then add all their connections
+        for code in self.scanned_code:
+            for in_f in code.input_files:
+                # If this file isn't in G it wasn't scanned, so add it and set color to self._orphaned_node_color
+                if in_f not in G:
+                    add_file_node(in_f, color=self._orphan_node_color)
+                G.add_edge(in_f, code.path_relative, link_type="file")
+
+            for in_d in code.input_datasets:
+                if in_d in code.output_datasets:
+                    continue
+                add_data_node(in_d)
+                G.add_edge(in_d, code.path_relative, link_type="dataset")
+
+            for out_d in code.output_datasets:
+                add_data_node(out_d)
+                G.add_edge(code.path_relative, out_d, link_type="dataset")
+
+        # Add a warning node if the DAG isn't acyclic
+        if not nx.is_directed_acyclic_graph(G):
+            G.add_node("CYCLES DETECTED, DAG IS NOT ACYCLIC!", shape="plain", fontsize="24", color="white")
+
+        if color_orphans:
+            for node in G:
+                # Ignore orphaned nodes if they are files (check with _type=='file', set above)
+                if G.nodes[node].get("_type") == "file":
+                    continue
+                # Otherwise, make all nodes without ancestors self._orphan_node_color
+                if not nx.ancestors(G, node):
+                    G.nodes[node]["color"] = self._orphan_node_color
+
+        if trim_dangling_data_nodes:
+            trim_nodes = []
+            for node in G:
+                # Ignore dangling nodes if they are files (check with _type=='file', set above)
+                if G.nodes[node].get("_type") == "file":
+                    continue
+                # Otherwise, remove all nodes with no decendents
+                if not nx.descendants(G, node):
+                    trim_nodes.append(node)
+            for node in trim_nodes:
+                G.remove_node(node)
+
+        return G
+
+    def DAG_to_file(self, filepath, G=None):
+        """Write a graphviz-style *.dot file to be converted into
+
+        Args:
+            filepath (str,Path,File): Path (or open file object) to write the .dot file to.
+        """
+        G = G or self.DAG()
+        notDAG = not nx.is_directed_acyclic_graph(G)
+
+        dot_str = StringIO()
+        nx.nx_pydot.write_dot(G, dot_str)
+        lines = dot_str.getvalue().split("\n")
+
+        extra = []
+        for attr_name, attr_vals in self.default_dot_attributes.items():
+            if notDAG and attr_name == "graph":
+                attr_vals = [x for x in attr_vals if "bgcolor" not in x]
+                attr_vals.append("bgcolor=red")
+
+            extra.append(f"{attr_name} [{' '.join(attr_vals)}];")
+
+        dot = "\n".join([lines[0], *extra, *lines[1:]])
+
+        if hasattr(filepath, "write"):
+            filepath.write(dot)
+        else:
+            with open(filepath, "w") as fh:
+                fh.write(dot)
+
+        filepath, ext = os.path.splitext(filepath)
+        ext = ext.strip(os.path.extsep) or 'pdf'
+
+        Source(dot).render(filepath, format=ext, cleanup=True)
+
+        return dot
