@@ -168,30 +168,37 @@ This is the idea of ‘source-to-table’, which requires a sequential order
 of code which transforms raw data into tables.</p>
 <div class="section" id="pipelines">
 <h2>Pipelines<a class="headerlink" href="#pipelines" title="Permalink to this headline">¶</a></h2>
-<p>In the software world, Makefiles are often used to achieve this centralization
+<p>In the software world, Makefiles are often used to achieve automation
 of process flow, and a key feature in these Makefiles is dependency checking.
 Dependency checking in a chaotic data environment like that in which
 we research is somewhat harder.</p>
-<p>My solution to this is to use a Python package called <a class="reference external" href="https://pydoit.org">Doit</a>, which combines
+<p>My first solution to this was to use a Python package called <a class="reference external" href="https://pydoit.org">Doit</a>, which combines
 dependency graph creation with automatic running.
 In the course of trying to find a solution to this problem, I looked into
-the famous alternatives:
-<a class="reference external" href="https://airflow.apache.org/">Airflow</a> and
-<a class="reference external" href="https://luigi.readthedocs.io/en/stable/index.html">Luigi</a>.
+the popular options like <a class="reference external" href="https://airflow.apache.org">Airflow</a> and <a class="reference external" href="https://luigi.readthedocs.io/en/stable/index.html">Luigi</a>.
 The decision to go with Doit was based on the specific use case of
 Accounting research, in which multiple data sources, languages, and coauthors
 were all involved.
 Doit seemed to present the most parsimonious way of defining <cite>tasks</cite>, which
 represent any atomic step in the pipeline.</p>
-<p>In the current implementation, these tasks can be defined simply by adding
-comment lines to any source-code, such as SAS or Stata files.
+<p>I quickly ran into limitations with Doit, specifically the graphing of output.
+Thus my second iteration was to manually make a parser to create a Directed
+Acyclic Graph (DAG) representation of the dependency tree with <a class="reference external" href="http://networkx.github.io">NetworkX</a>.
+I then use <a class="reference external" href="https://github.com/xflr6/graphviz">graphviz (Python)</a> to make the plots. This requires the native
+<a class="reference external" href="https://www.graphviz.org/">graphviz</a> to be installed, which probably means using Linux (unless you have
+mad Windows skills).</p>
+<p>The dependencies can be defined simply by adding comment lines to source-code,
+such as SAS or Stata files.
 For example:</p>
-<div class="highlight-stata notranslate"><div class="highlight"><pre><span></span><span class="cm">/* INPUT: Data/interim/dataset_from_python.dta */</span>
+<div class="highlight-stata notranslate"><div class="highlight"><pre><span></span><span class="cm">/* INPUT: interim/dataset_from_python.dta */</span><span class="k"></span>
+<span class="k">use</span> <span class="s">&quot;interim/dataset_from_python.dta&quot;</span>
 </pre></div>
 </div>
-<p>This would then be picked up by Doit, which would recognize that the file that
-created <cite>dataset_from_python.dta</cite> is a dependency of the Stata code,
-and make sure that it is run first (but not rerun unnecessarily).</p>
+<p>There are three such comments: <code class="docutils literal notranslate"><span class="pre">INPUT</span></code> (for when reading in a dataset),
+<code class="docutils literal notranslate"><span class="pre">INPUT_FILE</span></code> (for when running another file inline, like a load-function in
+python or running a do file in Stata), and <code class="docutils literal notranslate"><span class="pre">OUTPUT</span></code> for defining which
+datasets the current file creates.
+The DependencyScanner matches inputs to outputs to creat the DAG.</p>
 </div>
 <div class="section" id="python">
 <h2>Python<a class="headerlink" href="#python" title="Permalink to this headline">¶</a></h2>

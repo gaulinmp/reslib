@@ -1,0 +1,658 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>reslib.automate.code_parser &mdash; Research Library 0.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Research Library
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../philosophy.html">Philosophy of ResLib</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation of ResLib</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quickstart</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Research Library</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+          <li><a href="../automate.html">reslib.automate</a> &raquo;</li>
+        
+      <li>reslib.automate.code_parser</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reslib.automate.code_parser</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">********************************</span>
+<span class="sd">reslib.automate.code_parser</span>
+<span class="sd">********************************</span>
+
+<span class="sd">This module contains the basic functionality to parse dependencies from code.</span>
+<span class="sd">Currently it uses specially formatted comments to do so, hopefully one day it will automatically extract dependencies.</span>
+
+<span class="sd">Assumes files look something like this:</span>
+
+<span class="sd">    |                    ┌────────────────────────┐</span>
+<span class="sd">    | INPUT FILES -----&gt; │   This file runs and   │ --&gt; This file (file path)</span>
+<span class="sd">    |                    │   creates some output  │</span>
+<span class="sd">    |                    │   or writes data to    │</span>
+<span class="sd">    | INPUT DATASETS --&gt; │   disk.                │ --&gt; OUTPUT DATASETS</span>
+<span class="sd">    |                    └────────────────────────┘</span>
+
+<span class="sd">Parses comments that look like &quot;# INPUT_FILE:&quot; or &quot;# INPUT_DATASET:&quot; or &quot;# OUTPUT_DATASET:&quot; store them.</span>
+
+<span class="sd">:copyright: (c) 2019 by Maclean Gaulin.</span>
+<span class="sd">:license: MIT, see LICENSE for more details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># STDlib imports</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="c1"># 3rd party package imports</span>
+
+<span class="c1"># project imports</span>
+<span class="kn">from</span> <span class="nn">reslib.automate</span> <span class="kn">import</span> <span class="n">cleanpath</span> <span class="k">as</span> <span class="n">_clnpth</span>
+<span class="kn">from</span> <span class="nn">reslib.automate</span> <span class="kn">import</span> <span class="n">pathjoin</span> <span class="k">as</span> <span class="n">_pthjoin</span>
+
+
+<span class="c1"># Local logger</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+
+<div class="viewcode-block" id="CodeParserMetaclass"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.code_parser.CodeParserMetaclass">[docs]</a><span class="k">class</span> <span class="nc">CodeParserMetaclass</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compile a CodeParser class to include the regex and parsing functionality.</span>
+
+<span class="sd">    This allows for ``SAS.matches`` instead of ``SAS().matches``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;None&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">new_class</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">lastattr</span><span class="p">(</span><span class="n">attr_name</span><span class="p">,</span> <span class="n">use_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">first_non_empty</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">use_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">use_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">attr_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="c1"># Otherwise return the last attribute from the the stack of class inheretence</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">bc</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">,</span> <span class="p">{})</span> <span class="k">for</span> <span class="n">bc</span> <span class="ow">in</span> <span class="n">bases</span> <span class="o">+</span> <span class="p">(</span><span class="n">new_class</span><span class="p">,))</span>
+            <span class="k">if</span> <span class="n">first_non_empty</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">x</span>
+            <span class="k">return</span> <span class="n">a</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># SET FILE SEARCH REGEX - Do not inheret, recalculate every time.</span>
+        <span class="n">f_regex</span> <span class="o">=</span> <span class="n">lastattr</span><span class="p">(</span><span class="s2">&quot;_file_match_regex&quot;</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f_regex</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">f_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">f_regex</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">error</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">f_regex</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Otherwise just use the extension to match</span>
+        <span class="c1"># (a failure to compile re above defaults to this too)</span>
+        <span class="k">if</span> <span class="n">f_regex</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">f_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s2">&quot;\.</span><span class="si">{}</span><span class="s2">$&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">lastattr</span><span class="p">(</span><span class="s2">&quot;_extension&quot;</span><span class="p">))),</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">error</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># Accept anything with an extension</span>
+                <span class="n">f_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s2">&quot;\.[^.]*$&quot;</span><span class="p">)</span>
+
+        <span class="n">new_class</span><span class="o">.</span><span class="n">_file_match_regex</span> <span class="o">=</span> <span class="n">f_regex</span>
+
+        <span class="c1"># SET CODE SEARCH REGEXES</span>
+        <span class="k">def</span> <span class="nf">recomp</span><span class="p">(</span><span class="n">re_flags</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="c1"># If start/end is in kwargs, skip the following.</span>
+            <span class="c1"># If comment_*_regex is true, don&#39;t add to kwargs until after re.escape</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="s2">&quot;start end&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">lastattr</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_comment_</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">_regex&quot;</span><span class="p">):</span>
+                    <span class="n">kwargs</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">lastattr</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_comment_</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="s2">&quot;start end&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                    <span class="n">kwargs</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">lastattr</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_comment_</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s2">&quot;^\s*</span><span class="si">{start}</span><span class="s2">\s*</span><span class="si">{text}</span><span class="s2">:\s*(.+)\s*</span><span class="si">{end}</span><span class="s2">\s*$&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="n">flags</span><span class="o">=</span><span class="n">re_flags</span><span class="p">)</span>
+
+        <span class="n">new_class</span><span class="o">.</span><span class="n">_input_dataset_comment_regex</span> <span class="o">=</span> <span class="n">recomp</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">lastattr</span><span class="p">(</span><span class="s2">&quot;_input_dataset_comment_text&quot;</span><span class="p">))</span>
+        <span class="n">new_class</span><span class="o">.</span><span class="n">_input_file_comment_regex</span> <span class="o">=</span> <span class="n">recomp</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">lastattr</span><span class="p">(</span><span class="s2">&quot;_input_file_comment_text&quot;</span><span class="p">))</span>
+        <span class="n">new_class</span><span class="o">.</span><span class="n">_output_dataset_comment_regex</span> <span class="o">=</span> <span class="n">recomp</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">lastattr</span><span class="p">(</span><span class="s2">&quot;_output_dataset_comment_text&quot;</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">new_class</span></div>
+
+
+<div class="viewcode-block" id="CodeParser"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.code_parser.CodeParser">[docs]</a><span class="k">class</span> <span class="nc">CodeParser</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">CodeParserMetaclass</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;CodeParser imagines a file as something that takes input, and makes output:</span>
+
+<span class="sd">        |                    ┌────────────────────────┐</span>
+<span class="sd">        | INPUT FILES -----&gt; │   This file runs and   │ --&gt; This file (file path)</span>
+<span class="sd">        |                    │   creates some output  │</span>
+<span class="sd">        |                    │   or writes data to    │</span>
+<span class="sd">        | INPUT DATASETS --&gt; │   disk.                │ --&gt; OUTPUT DATASETS</span>
+<span class="sd">        |                    └────────────────────────┘</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        path_relative (str, path, None): Path of the code to be analyzed, relative to</span>
+<span class="sd">            ``os.path.join(project_root, code_path_prefix)``. Defaults to None, which means no file has been scanned.</span>
+<span class="sd">        code_path_prefix (str, path, None): Relative path to the code directory, starting from ``project_root``.</span>
+<span class="sd">            Defaults to ``None``, meaning all code paths are relative to ``project_root``.</span>
+<span class="sd">        data_path_prefix (str, path, None): Relative path to the data directory, starting from ``project_root``.</span>
+<span class="sd">            Defaults to ``None``, meaning all data paths are relative to ``project_root``.</span>
+<span class="sd">        project_root (str, path): Root of the project. If your project has multiple roots, I can&#39;t help you friend.</span>
+<span class="sd">        input_files (set): Set of input files scanned from comments in the code.</span>
+<span class="sd">        input_datasets (set): Set of input datasets scanned from comments in the code.</span>
+<span class="sd">        output_datasets (set): Set of output datasets scanned from comments in the code.</span>
+
+<span class="sd">    Private Attributes:</span>
+<span class="sd">        _language (str): Short name for the language of the CodeParser.</span>
+<span class="sd">        _extension (str): File extension of the code for this language.</span>
+<span class="sd">        _file_match_regex (re): Regular expression to match files to be checked by this parser. Default: ``*._extension``.</span>
+<span class="sd">        _file_encoding (str): Encoding of the file to be opened (passed to ``open(path, encoding=self._file_encoding)``)</span>
+<span class="sd">        _comment_start (str): The string to search for demarking the start of the comment.</span>
+<span class="sd">        _comment_start_regex (bool): Flag denoting the ``_comment_start`` variable is a regular expression</span>
+<span class="sd">            (pre-compiled or string to be complied).</span>
+<span class="sd">        _comment_end (str): The string to search for demarking the end of the comment.</span>
+<span class="sd">        _comment_end_regex (bool): Flag denoting the ``_comment_end`` variable is a regular expression</span>
+<span class="sd">            (pre-compiled or string to be complied).</span>
+<span class="sd">        _input_file_comment_text (str): String denoting the input file type.</span>
+<span class="sd">        _input_dataset_comment_text (str): String denoting the input dataset type.</span>
+<span class="sd">        _output_dataset_comment_text (str): String denoting the output dataset type.</span>
+<span class="sd">        _input_file_comment_regex (re): Regular expression complied from the comment start/end attribute and comment</span>
+<span class="sd">            text. Used to find input file comments in the code.</span>
+<span class="sd">        _input_dataset_comment_regex (re): Regular expression complied from the comment start/end attribute and comment</span>
+<span class="sd">            text. Used to find input dataset comments in the code.</span>
+<span class="sd">        _output_dataset_comment_regex (re): Regular expression complied from the comment start/end attribute and comment</span>
+<span class="sd">            text. Used to find output dataset comments in the code.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#: Relative path of the code to be analyzed, relative to ``os.path.join(project_root, code_path_prefix)``. Defaults to None, which means no file has been scanned.</span>
+    <span class="n">path_relative</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: Absolute path of the code to be analyzed. Defaults to None, which means no file has been scanned.</span>
+    <span class="n">path_absolute</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: Relative path to the code directory, starting from ``project_root``.</span>
+    <span class="n">code_path_prefix</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: Relative path to the data directory, starting from ``project_root``.</span>
+    <span class="n">data_path_prefix</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: Root of the project. If your project has multiple roots, I can&#39;t help you friend.</span>
+    <span class="n">project_root</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1">#: Set of input files scanned from comments in the code.</span>
+    <span class="n">input_files</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: Set of input datasets scanned from comments in the code.</span>
+    <span class="n">input_datasets</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: Set of output datasets scanned from comments in the code.</span>
+    <span class="n">output_datasets</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">_language</span> <span class="o">=</span> <span class="s2">&quot;text&quot;</span>
+    <span class="n">_extension</span> <span class="o">=</span> <span class="s2">&quot;txt&quot;</span>
+    <span class="n">_file_match_regex</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_file_encoding</span> <span class="o">=</span> <span class="s2">&quot;utf-8&quot;</span>
+    <span class="n">_comment_start</span> <span class="o">=</span> <span class="s2">&quot;/*&quot;</span>  <span class="c1"># TODO: implement list of start/stop pairs later</span>
+    <span class="n">_comment_start_regex</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># TODO: implement matching list of false/trues</span>
+    <span class="n">_comment_end</span> <span class="o">=</span> <span class="s2">&quot;*/&quot;</span>  <span class="c1"># TODO: implement list of start/stop pairs later</span>
+    <span class="n">_comment_end_regex</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># TODO: implement matching list of false/trues</span>
+    <span class="n">_input_file_comment_text</span> <span class="o">=</span> <span class="s2">&quot;INPUT_FILE&quot;</span>  <span class="c1"># TODO: Change to INPUT_FILE</span>
+    <span class="n">_input_dataset_comment_text</span> <span class="o">=</span> <span class="s2">&quot;INPUT&quot;</span>  <span class="c1"># TODO: Change to INPUT_DATA</span>
+    <span class="n">_output_dataset_comment_text</span> <span class="o">=</span> <span class="s2">&quot;OUTPUT&quot;</span>
+
+    <span class="c1">#: local variable to store last parsed file</span>
+    <span class="n">_parsed_file</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">path_relative</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">path_absolute</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">project_root</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
+        <span class="n">code_path_prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">data_path_prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">kwargs</span>
+
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_path</span><span class="p">(</span>
+            <span class="n">path_relative</span><span class="o">=</span><span class="n">path_relative</span><span class="p">,</span>
+            <span class="n">path_absolute</span><span class="o">=</span><span class="n">path_absolute</span><span class="p">,</span>
+            <span class="n">project_root</span><span class="o">=</span><span class="n">project_root</span><span class="p">,</span>
+            <span class="n">code_path_prefix</span><span class="o">=</span><span class="n">code_path_prefix</span><span class="p">,</span>
+            <span class="n">data_path_prefix</span><span class="o">=</span><span class="n">data_path_prefix</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_relative</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">analyze</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_language</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; (I:</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_files</span><span class="p">)</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_datasets</span><span class="p">)</span><span class="si">}</span><span class="s2">/O:</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_datasets</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path_relative</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot; (unparsed)&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;</span><span class="si">{</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_language</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span><span class="si">}</span><span class="s2">:: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path_relative</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+
+
+        <span class="n">s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">INPUT FILES (found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_files</span><span class="p">)</span><span class="si">}</span><span class="s2">):&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_files</span><span class="p">):</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t\t</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">INPUT DATASETS (found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_datasets</span><span class="p">)</span><span class="si">}</span><span class="s2">):&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_datasets</span><span class="p">):</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t\t</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">OUTPUT DATASETS (found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_datasets</span><span class="p">)</span><span class="si">}</span><span class="s2">):&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_datasets</span><span class="p">):</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t\t</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">Project Root: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">code_path_prefix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">Code Prefix: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">code_path_prefix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_path_prefix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">Data Prefix: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data_path_prefix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CodeParser.matches"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.code_parser.CodeParser.matches">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">matches</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path_relative</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_file_match_regex</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">path_relative</span><span class="p">))</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_parsed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parsed_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_relative</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parsed_file</span>
+
+<div class="viewcode-block" id="CodeParser.set_path"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.code_parser.CodeParser.set_path">[docs]</a>    <span class="k">def</span> <span class="nf">set_path</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">path_relative</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path_absolute</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">project_root</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">code_path_prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data_path_prefix</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the file path of the analyzed object, and calculate its relative position to base_dir.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            path_relative (str, path, None): Path of the code to be analyzed, relative to</span>
+<span class="sd">                ``os.path.join(project_root, code_path_prefix)``. Defaults to None.</span>
+<span class="sd">            path_absolute (str, path, None): Absolute path of the code to be analyzed, from which ``path_relative`` is</span>
+<span class="sd">                calculated. Ignored if ``path_relative`` is provided. Defaults to None.</span>
+<span class="sd">            code_path_prefix (str, path, None): Relative path to the code directory, starting from ``project_root``.</span>
+<span class="sd">                Defaults to ``None``, meaning all code paths are relative to ``project_root``.</span>
+<span class="sd">            data_path_prefix (str, path, None): Relative path to the data directory, starting from ``project_root``.</span>
+<span class="sd">                Defaults to ``None``, meaning all data paths are relative to ``project_root``.</span>
+<span class="sd">            project_root (str, path): Root of the project. If your project has multiple roots, I can&#39;t help you friend.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Reset dependencies when analyzing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parsed_file</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_files</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_datasets</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_datasets</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="s2">&quot;~&quot;</span> <span class="ow">in</span> <span class="n">project_root</span><span class="p">:</span>
+            <span class="n">project_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">project_root</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span> <span class="o">=</span> <span class="n">_clnpth</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">project_root</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">code_path_prefix</span> <span class="o">=</span> <span class="n">_clnpth</span><span class="p">(</span><span class="n">code_path_prefix</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_path_prefix</span> <span class="o">=</span> <span class="n">_clnpth</span><span class="p">(</span><span class="n">data_path_prefix</span><span class="p">)</span>
+
+        <span class="c1"># If they provided path_absolute, not path_relative, derive path_relative from it, and recalculate path_absolute below</span>
+        <span class="k">if</span> <span class="n">path_relative</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">path_absolute</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isabs</span><span class="p">(</span><span class="n">path_absolute</span><span class="p">):</span>
+                <span class="n">path_absolute</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relpath</span><span class="p">(</span><span class="n">path_absolute</span><span class="p">,</span> <span class="n">_pthjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">code_path_prefix</span><span class="p">))</span>
+            <span class="n">path_relative</span> <span class="o">=</span> <span class="n">path_absolute</span>
+
+        <span class="k">if</span> <span class="n">path_relative</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">path_relative</span> <span class="o">=</span> <span class="n">_clnpth</span><span class="p">(</span><span class="n">path_relative</span><span class="p">)</span>
+            <span class="c1"># Recalculate the path_absolute to the code file</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">path_absolute</span> <span class="o">=</span> <span class="n">_pthjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">code_path_prefix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_relative</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CodeParser.analyze"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.code_parser.CodeParser.analyze">[docs]</a>    <span class="k">def</span> <span class="nf">analyze</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_relative</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path_absolute</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Analyze the actual file.</span>
+
+<span class="sd">        Calls self.analyze_code(file_contents) after reading the file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path_relative (str): Path to the file. Defaults to None, taking the path to analyze from ``path_relative``.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: Dictionary of the resulting code object dependencies</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            UnicodeDecodeError: Raised if file is not encoded according to self._file_encoding (default: utf-8)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">path_relative</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_path</span><span class="p">(</span>
+                <span class="n">path_relative</span><span class="o">=</span><span class="n">path_relative</span><span class="p">,</span>
+                <span class="n">path_absolute</span><span class="o">=</span><span class="n">path_absolute</span><span class="p">,</span>
+                <span class="n">project_root</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">,</span>
+                <span class="n">code_path_prefix</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">code_path_prefix</span><span class="p">,</span>
+                <span class="n">data_path_prefix</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data_path_prefix</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_absolute</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;File path must be specified in init or as first argument to analyze().&quot;</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%r</span><span class="s2">.analyze(): </span><span class="si">%r</span><span class="s2"> (from </span><span class="si">%r</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_relative</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path_absolute</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_encoding</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+                <span class="n">code</span> <span class="o">=</span> <span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">UnicodeDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">UnicodeDecodeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unicode decode error: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path_absolute</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_code</span><span class="p">(</span><span class="n">code</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CodeParser.analyze_code"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.code_parser.CodeParser.analyze_code">[docs]</a>    <span class="k">def</span> <span class="nf">analyze_code</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Analyze the text of the file.&quot;&quot;&quot;</span>
+        <span class="n">found_something</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">for</span> <span class="n">_regex</span><span class="p">,</span> <span class="n">_set</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_file_comment_regex</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_files</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_dataset_comment_regex</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_datasets</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dataset_comment_regex</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_datasets</span><span class="p">),</span>
+        <span class="p">):</span>
+
+            <span class="k">for</span> <span class="n">_pth</span> <span class="ow">in</span> <span class="n">_regex</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">code</span><span class="p">):</span>
+                <span class="n">_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_clnpth</span><span class="p">(</span><span class="n">_pth</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>
+
+                <span class="c1"># We found something, this is a file worth &#39;keeping&#39;</span>
+                <span class="n">found_something</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="n">found_something</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parsed_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_relative</span></div>
+
+<div class="viewcode-block" id="CodeParser.matches_output"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.code_parser.CodeParser.matches_output">[docs]</a>    <span class="k">def</span> <span class="nf">matches_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_to_check</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; &quot;Are you my mother&quot; test.</span>
+<span class="sd">        Returns True-like if the file matches one of the &#39;outputs&#39; of this code.</span>
+<span class="sd">        Should be tested against inputs of other code to find a parent dependency.</span>
+
+<span class="sd">        Checks the input file against this code&#39;s ``path_relative`` (for a file dependency) and dataset outputs</span>
+<span class="sd">        (for a dataset dependency).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            file_to_check (str, path): File to check against this one&#39;s &#39;outputs&#39;, the relative path.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (str, None): The path to the file or dataset that matches, otherwise None.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            parent = CodeParser(path_relative=&quot;a.sas&quot;)</span>
+<span class="sd">            child = CodeParser(path_relative=&quot;b.sas&quot;)</span>
+
+<span class="sd">            for f in child.input_files | child.input_datasets:</span>
+<span class="sd">                match = parent.matches_output(f)</span>
+<span class="sd">                if not match:</span>
+<span class="sd">                    print(f&quot;No relation for {f}&quot;)</span>
+<span class="sd">                else:</span>
+<span class="sd">                    print(f&quot;{parent.path_relative} is the {match} we are looking for&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">file_to_check</span> <span class="o">=</span> <span class="n">_clnpth</span><span class="p">(</span><span class="n">file_to_check</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">file_to_check</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_relative</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path_absolute</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">file_to_check</span><span class="p">))</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">file_to_check</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_datasets</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="CodeParser.matches_input"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.code_parser.CodeParser.matches_input">[docs]</a>    <span class="k">def</span> <span class="nf">matches_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_to_check</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Asks &quot;Is this one of your inputs&quot;, for testing if this is your &#39;child&#39;.</span>
+
+<span class="sd">        Checks the input file against this code&#39;s name (for a file dependency) and outputs (for a dataset dependency).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            file_to_check (str, path): File to check against this one&#39;s &#39;outputs&#39;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (bool): Returns ``True`` if file_to_check is in the input files or datasets.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            parent = CodeParser(path_relative=&quot;a.sas&quot;)</span>
+<span class="sd">            child = CodeParser(path_relative=&quot;b.sas&quot;)</span>
+
+<span class="sd">            for f in parent.output_datasets:</span>
+<span class="sd">                match = child.matches_input(f)</span>
+<span class="sd">                if not match:</span>
+<span class="sd">                    print(f&quot;No relation for {f}&quot;)</span>
+<span class="sd">                else:</span>
+<span class="sd">                    print(f&quot;{child.path_relative} is the {match} we are looking for&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_clnpth</span><span class="p">(</span><span class="n">file_to_check</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_files</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_datasets</span></div>
+
+<div class="viewcode-block" id="CodeParser.check_parent_relationships"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.code_parser.CodeParser.check_parent_relationships">[docs]</a>    <span class="k">def</span> <span class="nf">check_parent_relationships</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">potential_parent</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Tests all outputs of provided potential parent to see if they match this object&#39;s inputs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            potential_parent (CodeParser): Potential parent code object to test the outputs against self&#39;s inputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list: List of overlapping files. These will be either the ``full_path`` of ``potential_parent`` or its</span>
+<span class="sd">                output datasets.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">matching_outputs_to_inputs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># First check if the file itself is one of the self.input_files</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches_input</span><span class="p">(</span><span class="n">potential_parent</span><span class="o">.</span><span class="n">path_relative</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+            <span class="n">matching_outputs_to_inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">match</span><span class="p">)</span>
+
+        <span class="c1"># Second, check if any of the parent&#39;s output_datasets match input_datasets</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">potential_parent</span><span class="o">.</span><span class="n">output_datasets</span><span class="p">:</span>
+            <span class="n">match</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches_input</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+                <span class="n">matching_outputs_to_inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">match</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">matching_outputs_to_inputs</span></div></div>
+
+
+<div class="viewcode-block" id="SAS"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.code_parser.SAS">[docs]</a><span class="k">class</span> <span class="nc">SAS</span><span class="p">(</span><span class="n">CodeParser</span><span class="p">):</span>
+    <span class="n">_language</span> <span class="o">=</span> <span class="s2">&quot;sas&quot;</span>
+    <span class="n">_extension</span> <span class="o">=</span> <span class="s2">&quot;sas&quot;</span></div>
+
+
+<div class="viewcode-block" id="Stata"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.code_parser.Stata">[docs]</a><span class="k">class</span> <span class="nc">Stata</span><span class="p">(</span><span class="n">CodeParser</span><span class="p">):</span>
+    <span class="n">_language</span> <span class="o">=</span> <span class="s2">&quot;stata&quot;</span>
+    <span class="n">_extension</span> <span class="o">=</span> <span class="s2">&quot;do&quot;</span></div>
+
+
+<div class="viewcode-block" id="Notebook"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.code_parser.Notebook">[docs]</a><span class="k">class</span> <span class="nc">Notebook</span><span class="p">(</span><span class="n">CodeParser</span><span class="p">):</span>
+    <span class="n">_language</span> <span class="o">=</span> <span class="s2">&quot;notebook&quot;</span>
+    <span class="n">_extension</span> <span class="o">=</span> <span class="s2">&quot;ipynb&quot;</span>
+    <span class="n">_comment_start</span> <span class="o">=</span> <span class="s1">&#39;&quot;#&#39;</span>
+    <span class="n">_comment_end</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\\\\</span><span class="s1">n&quot;,?&#39;</span>
+    <span class="n">_comment_end_regex</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="Python"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.code_parser.Python">[docs]</a><span class="k">class</span> <span class="nc">Python</span><span class="p">(</span><span class="n">CodeParser</span><span class="p">):</span>
+    <span class="n">_language</span> <span class="o">=</span> <span class="s2">&quot;python&quot;</span>
+    <span class="n">_extension</span> <span class="o">=</span> <span class="s2">&quot;py&quot;</span>
+    <span class="n">_comment_start</span> <span class="o">=</span> <span class="s2">&quot;#&quot;</span>
+    <span class="n">_comment_end</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="Manual"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.code_parser.Manual">[docs]</a><span class="k">class</span> <span class="nc">Manual</span><span class="p">(</span><span class="n">CodeParser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Manual downloader is used to give instructions for a manual step that isn&#39;t automated in code.&quot;&quot;&quot;</span>
+    <span class="n">_language</span> <span class="o">=</span> <span class="s2">&quot;manual&quot;</span>
+    <span class="n">_extension</span> <span class="o">=</span> <span class="s2">&quot;txt&quot;</span>
+    <span class="n">_comment_start</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">_comment_end</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Maclean Gaulin
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

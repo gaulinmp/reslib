@@ -166,9 +166,70 @@ Python in some or all of its data-cleaning or analysis, covered in
 <a class="reference internal" href="#python-library">Python Library</a>.</p>
 <div class="section" id="pipelines">
 <h2>Pipelines<a class="headerlink" href="#pipelines" title="Permalink to this headline">¶</a></h2>
-<p>Pipelines in ResLib are facilitated by <a class="reference external" href="https://pydoit.org">Doit</a>, which is extended herein to
-allow for parsing and extracting dependencies from source code in other
-languages through the use of specific comment tags.</p>
+<p>Dependency tracking of pipelines in ResLib is inspired by <a class="reference external" href="https://pydoit.org">Doit</a>.
+The DependencyScanner allows for parsing and extracting dependencies from
+source code through the use of specific comment tags.</p>
+<p>There are three such comments tags:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">INPUT</span></code> for when reading in a dataset</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">INPUT_FILE</span></code> for when running another file inline, like a load-function in python or running a do file in Stata</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">OUTPUT</span></code> for defining which datasets the current file creates.</p></li>
+</ul>
+<p>The DependencyScanner matches inputs to outputs to creat the DAG.
+The idea is that if you add <code class="docutils literal notranslate"><span class="pre">INPUT</span></code>/<code class="docutils literal notranslate"><span class="pre">OUTPUT</span></code> comments to your existing code,
+crating the DAG graph should be trivially easy, as the simple example below shows.</p>
+<p>As an example of how to integrate the depenedncy scanning into your project,
+assume the following three files exist in the ~/projects/example folder:</p>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">code/data.sas</span><a class="headerlink" href="#id2" title="Permalink to this code">¶</a></div>
+<div class="highlight-sas notranslate"><div class="highlight"><pre><span></span> <span class="c">/* INPUT: funda.sas7bdat */</span>
+<span class="kr"> PROC EXPORT </span>DATA=funda OUTFILE= <span class="s">&quot;data/stata_data.dta&quot;</span><span class="kr">; RUN;</span>
+ <span class="c">/* OUTPUT: stata_data.dta */</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">code/load_data.do</span><a class="headerlink" href="#id3" title="Permalink to this code">¶</a></div>
+<div class="highlight-stata notranslate"><div class="highlight"><pre><span></span> <span class="cm">/* INPUT: stata_data.dta */</span>
+<span class="k"> use</span> <span class="s">&quot;data/stata_data.dta&quot;</span>,<span class="k"> clear</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text">code/analysis.do</span><a class="headerlink" href="#id4" title="Permalink to this code">¶</a></div>
+<div class="highlight-stata notranslate"><div class="highlight"><pre><span></span> <span class="cm">/* INPUT_FILE: load_data.do */</span>
+<span class="k"> do</span> <span class="s">&quot;code/load_data.do&quot;</span>
+</pre></div>
+</div>
+</div>
+<p>Then the following would create a graph output at <code class="docutils literal notranslate"><span class="pre">pipeline.png</span></code>:</p>
+<div class="literal-block-wrapper docutils container" id="id5">
+<div class="code-block-caption"><span class="caption-text">dag.py</span><a class="headerlink" href="#id5" title="Permalink to this code">¶</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span> <span class="kn">from</span> <span class="nn">reslib.automate</span> <span class="kn">import</span> <span class="n">DependencyScanner</span><span class="p">,</span> <span class="n">SAS</span><span class="p">,</span> <span class="n">Stata</span>
+
+ <span class="c1"># Just scan for SAS and Stata code, located in the code directory.</span>
+ <span class="n">ds</span> <span class="o">=</span> <span class="n">DependencyScanner</span><span class="p">(</span><span class="n">project_root</span><span class="o">=</span><span class="s1">&#39;~/projects/example/&#39;</span><span class="p">,</span>
+                        <span class="n">code_path_prefix</span><span class="o">=</span><span class="s1">&#39;code&#39;</span><span class="p">,</span> <span class="n">data_path_prefix</span><span class="o">=</span><span class="s1">&#39;data&#39;</span><span class="p">)</span>
+ <span class="nb">print</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+ <span class="n">ds</span><span class="o">.</span><span class="n">DAG_to_file</span><span class="p">(</span><span class="s2">&quot;pipeline.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>will print the following:</p>
+<p>And create <code class="docutils literal notranslate"><span class="pre">pipeline.png</span></code> with the DAG graphed:</p>
+<img alt="_images/pipeline.png" src="_images/pipeline.png" />
+<p>The colors in the image are intended to be informative at a glance. Yellow
+indicates that a dependency doesn’t have a parent (only applies to datasets).
+Green indicates the files which were scanned, and grey indicates the datasets.
+Lastly, if the pipeline isn’t a DAG because it is cyclic (File A creates a
+dataset for File B, which creates a dataset used in File A), the background will
+turn red, for ERROR!!!</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">DependencyScanner</span></code> has many settings, the salient ones being:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">project_root</span></code>: Path to ‘root’ directory, from which relative paths to input/output file dependencies will be calculated. (Default = <code class="docutils literal notranslate"><span class="pre">'.'</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">code_path_prefix</span></code>: Path to ‘code’ directory, which is relative to the <code class="docutils literal notranslate"><span class="pre">project_root</span></code>. To make the full path to the code file, the prefix will be added to project root, then to the path defined in the INPUT/OUTPUT: comment. (Default = <code class="docutils literal notranslate"><span class="pre">None</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">data_path_prefix</span></code>: Path to ‘data’ directory, which is relative to the <code class="docutils literal notranslate"><span class="pre">project_root</span></code>. To make the full path to the data file, the prefix will be added to project root, then to the path defined in the INPUT/OUTPUT: comment. (Default = <code class="docutils literal notranslate"><span class="pre">None</span></code>)</p></li>
+</ul>
 </div>
 <div class="section" id="python-library">
 <h2>Python Library<a class="headerlink" href="#python-library" title="Permalink to this headline">¶</a></h2>

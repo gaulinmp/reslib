@@ -1,0 +1,491 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>reslib.automate.scanner &mdash; Research Library 0.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Research Library
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../philosophy.html">Philosophy of ResLib</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation of ResLib</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quickstart</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Research Library</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+          <li><a href="../automate.html">reslib.automate</a> &raquo;</li>
+        
+      <li>reslib.automate.scanner</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reslib.automate.scanner</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">********************************</span>
+<span class="sd">reslib.automate.scanner</span>
+<span class="sd">********************************</span>
+
+<span class="sd">This module contains the basic functionality to scan a code-base and extract dependencies from comments.</span>
+
+<span class="sd">Assumes files look something like this:</span>
+
+<span class="sd">    |                    ┌────────────────────────┐</span>
+<span class="sd">    | INPUT FILES -----&gt; │   This file runs and   │ --&gt; This file (file path)</span>
+<span class="sd">    |                    │   creates some output  │</span>
+<span class="sd">    |                    │   or writes data to    │</span>
+<span class="sd">    | INPUT DATASETS --&gt; │   disk.                │ --&gt; OUTPUT DATASETS</span>
+<span class="sd">    |                    └────────────────────────┘</span>
+
+<span class="sd">Uses reslib.automate.code_parser.CodeParser objects to extract comments from code, then calculates the dependency graph.</span>
+<span class="sd">This stemmed from ``doit graph``, but I wanted more flexibility.</span>
+
+<span class="sd">:copyright: (c) 2019 by Maclean Gaulin.</span>
+<span class="sd">:license: MIT, see LICENSE for more details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># STDlib imports</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">StringIO</span>
+
+<span class="c1"># Local logger</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># 3rd party package imports</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;NetworkX library not found, DAG functionality unavailable.&quot;</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">graphviz</span> <span class="kn">import</span> <span class="n">Source</span>
+<span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Graphviz library not found, DAG plotting unavailable.&quot;</span><span class="p">)</span>
+
+<span class="c1"># project imports</span>
+<span class="kn">from</span> <span class="nn">reslib.automate</span> <span class="kn">import</span> <span class="n">cleanpath</span> <span class="k">as</span> <span class="n">_clnpth</span>
+<span class="kn">from</span> <span class="nn">reslib.automate</span> <span class="kn">import</span> <span class="n">pathjoin</span> <span class="k">as</span> <span class="n">_pthjoin</span>
+<span class="kn">from</span> <span class="nn">reslib.automate.code_parser</span> <span class="kn">import</span> <span class="n">SAS</span><span class="p">,</span> <span class="n">Stata</span><span class="p">,</span> <span class="n">Notebook</span><span class="p">,</span> <span class="n">Python</span>
+
+
+<div class="viewcode-block" id="DependencyScanner"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.scanner.DependencyScanner">[docs]</a><span class="k">class</span> <span class="nc">DependencyScanner</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Scan a code-base for dependencies.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        project_root (str, path): Absolute path to project root. Will call ``os.path.abspath()`` if input is not already so.</span>
+<span class="sd">        code_path_prefix (str, path, None): Prefix string to add to any code, used to resolve the absolute path via:</span>
+<span class="sd">            ```os.path.join(project_root, code_path_prefix, relative_code_path_from_comment)```.</span>
+<span class="sd">        data_path_prefix (str, path, None): Prefix string to add to any data, used to resolve the absolute path via:</span>
+<span class="sd">            ```os.path.join(project_root, data_path_prefix, relative_data_path_from_comment)```.</span>
+<span class="sd">        parser_list: List of ``CodeParser`` subclass objects (not instances!).</span>
+<span class="sd">        scanned_code: Result list of scanned ``CodeParser`` instances.</span>
+<span class="sd">        default_dot_attributes: Tuple of lines to be added to the .dot file output.</span>
+
+<span class="sd">     Private Attributes:</span>
+<span class="sd">        _scanned_code: List of scanned ``CodeParser`` instances.</span>
+<span class="sd">        _ignore_folders: Set of folders (thus also sub-folders) to ignore.</span>
+
+<span class="sd">    Examples:</span>
+
+<span class="sd">        Assume the following three files exist in the ``~/projects/example folder``:</span>
+
+<span class="sd">        ```code/data.sas</span>
+<span class="sd">            /* INPUT: funda.sas7bdat */</span>
+<span class="sd">            PROC EXPORT DATA=funda OUTFILE= &quot;data/stata_data.dta&quot;; RUN;</span>
+<span class="sd">            /* OUTPUT: stata_data.dta */</span>
+<span class="sd">        ```</span>
+
+<span class="sd">        ```code/load_data.do</span>
+<span class="sd">            /* INPUT: stata_data.dta */</span>
+<span class="sd">            use &quot;data/stata_data.dta&quot;</span>
+<span class="sd">        ```</span>
+
+<span class="sd">        ```code/analysis.do</span>
+<span class="sd">            /* INPUT_FILE: load_data.do */</span>
+<span class="sd">            do &quot;code/load_data.do&quot;</span>
+<span class="sd">        ```</span>
+
+<span class="sd">        Then the following would create a graph output at pipeline.pdf::</span>
+
+<span class="sd">            from reslib.automate import DependencyScanner</span>
+
+<span class="sd">            # Just scan for SAS and Stata code, located in the code directory.</span>
+<span class="sd">            ds = DependencyScanner(project_root=&#39;~/projects/example/&#39;,</span>
+<span class="sd">                                  code_path_prefix=&#39;code&#39;, data_path_prefix=&#39;data&#39;)</span>
+<span class="sd">            print(ds)</span>
+<span class="sd">            ds.DAG_to_file(&quot;pipeline.pdf&quot;)</span>
+
+<span class="sd">        Alternatively, a one-liner on the commandline:</span>
+
+<span class="sd">            python -c &quot;from reslib.automate import *;DependencyScanner(code_path_prefix=&#39;data&#39;, data_path_prefix=&#39;code&#39;).DAG_to_file(&#39;pipeline&#39;)&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#: List of Parsers to check against cost. Defaults to [SAS, Stata, Notebook, Python]</span>
+    <span class="n">parser_list</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: Default attributes to add to the .dot file output.</span>
+    <span class="n">default_dot_attributes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;graph&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;rankdir=LR&quot;</span><span class="p">],</span> <span class="s2">&quot;node&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;style=filled&quot;</span><span class="p">],</span> <span class="s2">&quot;edge&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;arrowsize=1.5&quot;</span><span class="p">]}</span>
+
+    <span class="c1">#: Orphaned node color</span>
+    <span class="n">_file_node_color</span> <span class="o">=</span> <span class="s2">&quot;seagreen3&quot;</span>
+    <span class="c1">#: Orphaned node color</span>
+    <span class="n">_orphan_node_color</span> <span class="o">=</span> <span class="s2">&quot;gold&quot;</span>
+
+    <span class="c1">#: Private esults of scanning</span>
+    <span class="n">_scanned_code</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># Private attributes</span>
+    <span class="n">_ignore_folders</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;.git&quot;</span><span class="p">,</span> <span class="s2">&quot;.ipynb_checkpoints&quot;</span><span class="p">,</span> <span class="s2">&quot;__pycache__&quot;</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">parsers</span><span class="p">,</span> <span class="n">project_root</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">code_path_prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data_path_prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ignore_folders</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize the Dependency Scanner&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span> <span class="o">=</span> <span class="n">project_root</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">code_path_prefix</span> <span class="o">=</span> <span class="n">code_path_prefix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_path_prefix</span> <span class="o">=</span> <span class="n">data_path_prefix</span>
+
+        <span class="k">if</span> <span class="s1">&#39;~&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isabs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">)</span>
+
+        <span class="c1"># Take override parser list if provided</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parsers</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parser_list</span> <span class="o">=</span> <span class="n">parsers</span>
+
+        <span class="c1"># Check again, to allow for sub-classing defining the parser_list</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser_list</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parser_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">SAS</span><span class="p">,</span> <span class="n">Stata</span><span class="p">,</span> <span class="n">Notebook</span><span class="p">,</span> <span class="n">Python</span><span class="p">]</span>
+
+        <span class="c1"># Verify that ignore_folders is a set</span>
+        <span class="k">if</span> <span class="n">ignore_folders</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ignore_folders</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">ignore_folders</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scanned_code</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scanned_code</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">scanned_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scanned_code</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DependencyScanner.scan"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.scanner.DependencyScanner.scan">[docs]</a>    <span class="k">def</span> <span class="nf">scan</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Scan through the directory starting from ``self.project_root`` (or ``override_path`` if provided),</span>
+<span class="sd">        calling analyze(file) for each file that matches ``*.extension``.</span>
+
+<span class="sd">        The dir that is passed to parser.analyze is always based on what was passed in.</span>
+<span class="sd">        If project_root is absolute, the parser will get absolute paths.</span>
+<span class="sd">        If it is relative, it will get relatives paths.</span>
+
+<span class="sd">        Each CodeParser object contains four important values:</span>
+
+<span class="sd">            relative_path</span>
+<span class="sd">            input_files</span>
+<span class="sd">            input_datasets</span>
+<span class="sd">            output_datasets</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scanned_code</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">start_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">code_path_prefix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">start_dir</span> <span class="o">=</span> <span class="n">_pthjoin</span><span class="p">(</span><span class="n">start_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">code_path_prefix</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">_dir</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">start_dir</span><span class="p">):</span>
+            <span class="c1"># Ignore if the ignore_folders are anywhere in the path</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">_dir</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">))</span> <span class="o">&amp;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ignore_folders</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">_file</span> <span class="ow">in</span> <span class="n">_files</span><span class="p">:</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="n">_clnpth</span><span class="p">(</span><span class="n">_pthjoin</span><span class="p">(</span><span class="n">_dir</span><span class="p">,</span> <span class="n">_file</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">parser</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser_list</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">parser</span><span class="o">.</span><span class="n">matches</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                    <span class="c1"># Create the parser object with this code path</span>
+                    <span class="n">res</span> <span class="o">=</span> <span class="n">parser</span><span class="p">(</span>
+                        <span class="n">path_absolute</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                        <span class="n">project_root</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">,</span>
+                        <span class="n">code_path_prefix</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">code_path_prefix</span><span class="p">,</span>
+                        <span class="n">data_path_prefix</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data_path_prefix</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">is_parsed</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_scanned_code</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+
+                    <span class="k">break</span>  <span class="c1"># break out of parser_list, we found our match</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scanned_code</span></div>
+
+<div class="viewcode-block" id="DependencyScanner.DAG"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.scanner.DependencyScanner.DAG">[docs]</a>    <span class="k">def</span> <span class="nf">DAG</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">color_orphans</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">trim_dangling_data_nodes</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create the Directed Acyclic Graph (DAG) for the codebase.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            networkx.DiGraph: DiGraph of the codebase, represented in networkX format.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">add_file_node</span><span class="p">(</span><span class="n">file_node_or_list</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s2">&quot;note&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_node_or_list</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">file_node_or_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">file_node_or_list</span><span class="p">]</span>
+            <span class="n">G</span><span class="o">.</span><span class="n">add_nodes_from</span><span class="p">(</span><span class="n">file_node_or_list</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_node_color</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">_type</span><span class="o">=</span><span class="s2">&quot;file&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">add_data_node</span><span class="p">(</span><span class="n">data_node</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">data_node</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">G</span><span class="p">:</span>
+                <span class="n">G</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">data_node</span><span class="p">,</span> <span class="n">_type</span><span class="o">=</span><span class="s2">&quot;dataset&quot;</span><span class="p">)</span>
+
+        <span class="c1"># First add the scanned files themselves</span>
+        <span class="n">add_file_node</span><span class="p">([</span><span class="n">code</span><span class="o">.</span><span class="n">path_relative</span> <span class="k">for</span> <span class="n">code</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scanned_code</span><span class="p">])</span>
+
+        <span class="c1"># Then add all their connections</span>
+        <span class="k">for</span> <span class="n">code</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scanned_code</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">in_f</span> <span class="ow">in</span> <span class="n">code</span><span class="o">.</span><span class="n">input_files</span><span class="p">:</span>
+                <span class="c1"># If this file isn&#39;t in G it wasn&#39;t scanned, so add it and set color to self._orphaned_node_color</span>
+                <span class="k">if</span> <span class="n">in_f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">G</span><span class="p">:</span>
+                    <span class="n">add_file_node</span><span class="p">(</span><span class="n">in_f</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_orphan_node_color</span><span class="p">)</span>
+                <span class="n">G</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">in_f</span><span class="p">,</span> <span class="n">code</span><span class="o">.</span><span class="n">path_relative</span><span class="p">,</span> <span class="n">link_type</span><span class="o">=</span><span class="s2">&quot;file&quot;</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">in_d</span> <span class="ow">in</span> <span class="n">code</span><span class="o">.</span><span class="n">input_datasets</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">in_d</span> <span class="ow">in</span> <span class="n">code</span><span class="o">.</span><span class="n">output_datasets</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">add_data_node</span><span class="p">(</span><span class="n">in_d</span><span class="p">)</span>
+                <span class="n">G</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">in_d</span><span class="p">,</span> <span class="n">code</span><span class="o">.</span><span class="n">path_relative</span><span class="p">,</span> <span class="n">link_type</span><span class="o">=</span><span class="s2">&quot;dataset&quot;</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">out_d</span> <span class="ow">in</span> <span class="n">code</span><span class="o">.</span><span class="n">output_datasets</span><span class="p">:</span>
+                <span class="n">add_data_node</span><span class="p">(</span><span class="n">out_d</span><span class="p">)</span>
+                <span class="n">G</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">path_relative</span><span class="p">,</span> <span class="n">out_d</span><span class="p">,</span> <span class="n">link_type</span><span class="o">=</span><span class="s2">&quot;dataset&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Add a warning node if the DAG isn&#39;t acyclic</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">nx</span><span class="o">.</span><span class="n">is_directed_acyclic_graph</span><span class="p">(</span><span class="n">G</span><span class="p">):</span>
+            <span class="n">G</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">&quot;CYCLES DETECTED, DAG IS NOT ACYCLIC!&quot;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s2">&quot;plain&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;24&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">color_orphans</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">G</span><span class="p">:</span>
+                <span class="c1"># Ignore orphaned nodes if they are files (check with _type==&#39;file&#39;, set above)</span>
+                <span class="k">if</span> <span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;_type&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;file&quot;</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="c1"># Otherwise, make all nodes without ancestors self._orphan_node_color</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">nx</span><span class="o">.</span><span class="n">ancestors</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+                    <span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_orphan_node_color</span>
+
+        <span class="k">if</span> <span class="n">trim_dangling_data_nodes</span><span class="p">:</span>
+            <span class="n">trim_nodes</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">G</span><span class="p">:</span>
+                <span class="c1"># Ignore dangling nodes if they are files (check with _type==&#39;file&#39;, set above)</span>
+                <span class="k">if</span> <span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;_type&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;file&quot;</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="c1"># Otherwise, remove all nodes with no decendents</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">nx</span><span class="o">.</span><span class="n">descendants</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+                    <span class="n">trim_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">trim_nodes</span><span class="p">:</span>
+                <span class="n">G</span><span class="o">.</span><span class="n">remove_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">G</span></div>
+
+<div class="viewcode-block" id="DependencyScanner.DAG_to_file"><a class="viewcode-back" href="../../../api/reslib.automate.html#reslib.automate.scanner.DependencyScanner.DAG_to_file">[docs]</a>    <span class="k">def</span> <span class="nf">DAG_to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">G</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Write a graphviz-style *.dot file to be converted into</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            filepath (str,Path,File): Path (or open file object) to write the .dot file to.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="n">G</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">DAG</span><span class="p">()</span>
+        <span class="n">notDAG</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">nx</span><span class="o">.</span><span class="n">is_directed_acyclic_graph</span><span class="p">(</span><span class="n">G</span><span class="p">)</span>
+
+        <span class="n">dot_str</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">()</span>
+        <span class="n">nx</span><span class="o">.</span><span class="n">nx_pydot</span><span class="o">.</span><span class="n">write_dot</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">dot_str</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">dot_str</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">extra</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">attr_vals</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_dot_attributes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">notDAG</span> <span class="ow">and</span> <span class="n">attr_name</span> <span class="o">==</span> <span class="s2">&quot;graph&quot;</span><span class="p">:</span>
+                <span class="n">attr_vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">attr_vals</span> <span class="k">if</span> <span class="s2">&quot;bgcolor&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span>
+                <span class="n">attr_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;bgcolor=red&quot;</span><span class="p">)</span>
+
+            <span class="n">extra</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">attr_name</span><span class="si">}</span><span class="s2"> [</span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">attr_vals</span><span class="p">)</span><span class="si">}</span><span class="s2">];&quot;</span><span class="p">)</span>
+
+        <span class="n">dot</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">*</span><span class="n">extra</span><span class="p">,</span> <span class="o">*</span><span class="n">lines</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;write&quot;</span><span class="p">):</span>
+            <span class="n">filepath</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">dot</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+                <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">dot</span><span class="p">)</span>
+
+        <span class="n">filepath</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+        <span class="n">ext</span> <span class="o">=</span> <span class="n">ext</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">extsep</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;pdf&#39;</span>
+
+        <span class="n">Source</span><span class="p">(</span><span class="n">dot</span><span class="p">)</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="n">ext</span><span class="p">,</span> <span class="n">cleanup</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">dot</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Maclean Gaulin
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

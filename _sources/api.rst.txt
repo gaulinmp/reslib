@@ -35,7 +35,8 @@ Automate
    :maxdepth: 2
 
    api/reslib.automate
-   api/reslib.automate.tasks
+   api/reslib.automate.scanner
+   api/reslib.automate.code_parser
 
 
 

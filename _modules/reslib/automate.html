@@ -167,11 +167,20 @@
 <span class="c1"># Stdlib imports</span>
 <span class="kn">import</span> <span class="nn">os</span> <span class="k">as</span> <span class="nn">_os</span>
 <span class="kn">import</span> <span class="nn">re</span> <span class="k">as</span> <span class="nn">_re</span>
+<span class="c1"># import sys</span>
+<span class="c1"># import inspect</span>
+<span class="c1"># import pkgutil</span>
 
 <span class="c1"># Third party imports</span>
+<span class="c1"># import pandas as pd</span>
+
+<span class="c1"># from doit.task import Task</span>
+<span class="c1"># from doit.dependency import UptodateCalculator</span>
+<span class="c1"># from doit.cmd_base import ModuleTaskLoader, NamespaceTaskLoader</span>
+<span class="c1"># from doit.doit_cmd import DoitMain</span>
 
 <span class="c1"># Library imports</span>
-
+<span class="c1"># from reslib.config import Config</span>
 
 
 <div class="viewcode-block" id="cleanpath"><a class="viewcode-back" href="../../api/reslib.automate.html#reslib.automate.cleanpath">[docs]</a><span class="k">def</span> <span class="nf">cleanpath</span><span class="p">(</span><span class="n">path_to_clean</span><span class="p">,</span> <span class="n">re_pathsep</span><span class="o">=</span><span class="n">_re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[</span><span class="se">\\</span><span class="s2">]+&quot;</span><span class="p">),</span> <span class="n">re_dotstart</span><span class="o">=</span><span class="n">_re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^./|/$&quot;</span><span class="p">)):</span>
@@ -185,6 +194,10 @@
     <span class="sd">&quot;&quot;&quot;Join, normalize, and clean a list of paths, allowing for ``None``s (filtered out)&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">cleanpath</span><span class="p">(</span><span class="n">_os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">_os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="o">*</span><span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">paths</span><span class="p">))))</span></div>
 
+
+<span class="c1"># These have to go after cleanpath/pathjoin, because scanner/code_parser use both</span>
+<span class="kn">from</span> <span class="nn">reslib.automate.code_parser</span> <span class="kn">import</span> <span class="p">(</span><span class="n">SAS</span><span class="p">,</span> <span class="n">Stata</span><span class="p">,</span> <span class="n">Notebook</span><span class="p">,</span> <span class="n">Python</span><span class="p">,</span> <span class="n">Manual</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">reslib.automate.scanner</span> <span class="kn">import</span> <span class="n">DependencyScanner</span>
 </pre></div>
 
            </div>
