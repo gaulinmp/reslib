@@ -6,15 +6,24 @@ Subpackages
 
 .. toctree::
 
-   reslib.automate.tasks
+   reslib.automate.code_parser
+   reslib.automate.scanner
 
 Submodules
 ----------
 
-reslib.automate.plot module
+reslib.automate.code_parser module
 ---------------------------
 
-.. automodule:: reslib.automate.plot
+.. automodule:: reslib.automate.code_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+reslib.automate.scanner module
+---------------------------
+
+.. automodule:: reslib.automate.scanner
    :members:
    :undoc-members:
    :show-inheritance:

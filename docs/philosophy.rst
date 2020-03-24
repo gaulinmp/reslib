@@ -15,35 +15,43 @@ of code which transforms raw data into tables.
 Pipelines
 -----------------------------
 
-In the software world, Makefiles are often used to achieve this centralization
+In the software world, Makefiles are often used to achieve automation
 of process flow, and a key feature in these Makefiles is dependency checking.
 Dependency checking in a chaotic data environment like that in which
 we research is somewhat harder.
 
-My solution to this is to use a Python package called `Doit`_, which combines
+My first solution to this was to use a Python package called `Doit`_, which combines
 dependency graph creation with automatic running.
 In the course of trying to find a solution to this problem, I looked into
-the famous alternatives:
-`Airflow <https://airflow.apache.org/>`__ and
-`Luigi <https://luigi.readthedocs.io/en/stable/index.html>`__.
+the popular options like `Airflow`_ and `Luigi`_.
 The decision to go with Doit was based on the specific use case of
 Accounting research, in which multiple data sources, languages, and coauthors
 were all involved.
 Doit seemed to present the most parsimonious way of defining `tasks`, which
 represent any atomic step in the pipeline.
 
+I quickly ran into limitations with Doit, specifically the graphing of output.
+Thus my second iteration was to manually make a parser to create a Directed
+Acyclic Graph (DAG) representation of the dependency tree with `NetworkX`_.
+I then use `graphviz (Python)`_ to make the plots. This requires the native
+`graphviz`_ to be installed, which probably means using Linux (unless you have
+mad Windows skills).
 
-In the current implementation, these tasks can be defined simply by adding
-comment lines to any source-code, such as SAS or Stata files.
+
+The dependencies can be defined simply by adding comment lines to source-code,
+such as SAS or Stata files.
 For example:
 
 .. code-block:: stata
 
-   /* INPUT: Data/interim/dataset_from_python.dta */
+   /* INPUT: interim/dataset_from_python.dta */
+   use "interim/dataset_from_python.dta"
 
-This would then be picked up by Doit, which would recognize that the file that
-created `dataset_from_python.dta` is a dependency of the Stata code,
-and make sure that it is run first (but not rerun unnecessarily).
+There are three such comments: ``INPUT`` (for when reading in a dataset),
+``INPUT_FILE`` (for when running another file inline, like a load-function in
+python or running a do file in Stata), and ``OUTPUT`` for defining which
+datasets the current file creates.
+The DependencyScanner matches inputs to outputs to creat the DAG.
 
 
 Python
@@ -56,3 +64,8 @@ in `Python`_.
 
 
 .. _Doit : https://pydoit.org
+.. _Airflow : https://airflow.apache.org
+.. _Luigi : https://luigi.readthedocs.io/en/stable/index.html
+.. _NetworkX : http://networkx.github.io
+.. _graphviz (Python) : https://github.com/xflr6/graphviz
+.. _graphviz : https://www.graphviz.org/
