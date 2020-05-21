@@ -34,7 +34,7 @@ assume the following three files exist in the ~/projects/example folder:
 .. code-block:: sas
    :caption: code/data.sas
 
-    /* INPUT: funda.sas7bdat */
+    /* INPUT_DATASET funda.sas7bdat */
     PROC EXPORT DATA=funda OUTFILE= "data/stata_data.dta"; RUN;
     /* OUTPUT: stata_data.dta */
 
@@ -42,7 +42,7 @@ assume the following three files exist in the ~/projects/example folder:
 .. code-block:: stata
    :caption: code/load_data.do
 
-    /* INPUT: stata_data.dta */
+    /* INPUT_DATASET stata_data.dta */
     use "data/stata_data.dta", clear
 
 

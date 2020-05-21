@@ -69,13 +69,13 @@ class DependencyScanner:
         Assume the following three files exist in the ``~/projects/example folder``:
 
         ```code/data.sas
-            /* INPUT: funda.sas7bdat */
+            /* INPUT_DATASET funda.sas7bdat */
             PROC EXPORT DATA=funda OUTFILE= "data/stata_data.dta"; RUN;
             /* OUTPUT: stata_data.dta */
         ```
 
         ```code/load_data.do
-            /* INPUT: stata_data.dta */
+            /* INPUT_DATASET stata_data.dta */
             use "data/stata_data.dta"
         ```
 
@@ -289,7 +289,9 @@ class DependencyScanner:
 
         filepath, ext = os.path.splitext(filepath)
         ext = ext.strip(os.path.extsep) or 'pdf'
-
-        Source(dot).render(filepath, format=ext, cleanup=True)
+        try:
+            Source(dot).render(filepath, format=ext, cleanup=True)
+        except NameError as e:
+            logger.error("Graphviz library not found, DAG plotting unavailable.")
 
         return dot

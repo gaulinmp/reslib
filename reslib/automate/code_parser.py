@@ -181,8 +181,8 @@ class CodeParser(metaclass=CodeParserMetaclass):
     _comment_start_regex = False  # TODO: implement matching list of false/trues
     _comment_end = "*/"  # TODO: implement list of start/stop pairs later
     _comment_end_regex = False  # TODO: implement matching list of false/trues
-    _input_file_comment_text = "INPUT_FILE"  # TODO: Change to INPUT_FILE
-    _input_dataset_comment_text = "INPUT"  # TODO: Change to INPUT_DATA
+    _input_file_comment_text = "INPUT_FILE"
+    _input_dataset_comment_text = "INPUT_DATASET"
     _output_dataset_comment_text = "OUTPUT"
     _ignore_comment_text = "RESLIB_IGNORE"
 
