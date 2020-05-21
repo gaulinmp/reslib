@@ -345,7 +345,7 @@ class CodeParser(metaclass=CodeParserMetaclass):
         found_something = False
 
         ignore = self._ignore_comment_regex.search(code)
-        if ignore and ignore.group(1).lower() in ('true', 'yes', '1'):
+        if ignore and ignore.group(1).strip().lower() in ('true', 'yes', '1'):
             return False
 
         for _regex, _set in (
