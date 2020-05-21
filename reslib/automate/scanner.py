@@ -14,6 +14,8 @@ Assumes files look something like this:
     | INPUT DATASETS --> │   disk.                │ --> OUTPUT DATASETS
     |                    └────────────────────────┘
 
+Files can be ignored by adding the comment: RESLIB_IGNORE: True
+
 Uses reslib.automate.code_parser.CodeParser objects to extract comments from code, then calculates the dependency graph.
 This stemmed from ``doit graph``, but I wanted more flexibility.
 

@@ -15,7 +15,9 @@ Assumes files look something like this:
     | INPUT DATASETS --> │   disk.                │ --> OUTPUT DATASETS
     |                    └────────────────────────┘
 
+
 Parses comments that look like "# INPUT_FILE:" or "# INPUT_DATASET:" or "# OUTPUT_DATASET:" store them.
+Files can be ignored by adding the comment: "RESLIB_IGNORE: True"
 
 :copyright: (c) 2019 by Maclean Gaulin.
 :license: MIT, see LICENSE for more details.
@@ -97,6 +99,7 @@ class CodeParserMetaclass(type):
 
             return re.compile("^\s*{start}\s*{text}:\s*(.+)\s*{end}\s*$".format(**kwargs), flags=re_flags)
 
+        new_class._ignore_comment_regex = recomp(text=lastattr("_ignore_comment_text"))
         new_class._input_dataset_comment_regex = recomp(text=lastattr("_input_dataset_comment_text"))
         new_class._input_file_comment_regex = recomp(text=lastattr("_input_file_comment_text"))
         new_class._output_dataset_comment_regex = recomp(text=lastattr("_output_dataset_comment_text"))
@@ -137,9 +140,12 @@ class CodeParser(metaclass=CodeParserMetaclass):
         _comment_end (str): The string to search for demarking the end of the comment.
         _comment_end_regex (bool): Flag denoting the ``_comment_end`` variable is a regular expression
             (pre-compiled or string to be complied).
+        _ignore_comment_text (str): String denoting the ignore comment.
         _input_file_comment_text (str): String denoting the input file type.
         _input_dataset_comment_text (str): String denoting the input dataset type.
         _output_dataset_comment_text (str): String denoting the output dataset type.
+        _ignore_comment_regex (re): Regular expression complied from the comment start/end attribute and ignore comment
+            text. Used to signal a particular file should be ignored.
         _input_file_comment_regex (re): Regular expression complied from the comment start/end attribute and comment
             text. Used to find input file comments in the code.
         _input_dataset_comment_regex (re): Regular expression complied from the comment start/end attribute and comment
@@ -178,6 +184,7 @@ class CodeParser(metaclass=CodeParserMetaclass):
     _input_file_comment_text = "INPUT_FILE"  # TODO: Change to INPUT_FILE
     _input_dataset_comment_text = "INPUT"  # TODO: Change to INPUT_DATA
     _output_dataset_comment_text = "OUTPUT"
+    _ignore_comment_text = "RESLIB_IGNORE"
 
     #: local variable to store last parsed file
     _parsed_file = None
@@ -327,8 +334,19 @@ class CodeParser(metaclass=CodeParserMetaclass):
         return self.analyze_code(code)
 
     def analyze_code(self, code):
-        """Analyze the text of the file."""
+        """Analyze the text of the file.
+
+        Args:
+            code (str): Text of the file to be analyzed.
+
+        Returns:
+            bool: Returns True if the code had tags to parse.
+        """
         found_something = False
+
+        ignore = self._ignore_comment_regex.search(code)
+        if ignore and ignore.group(1).lower() in ('true', 'yes', '1'):
+            return False
 
         for _regex, _set in (
             (self._input_file_comment_regex, self.input_files),
@@ -344,6 +362,8 @@ class CodeParser(metaclass=CodeParserMetaclass):
 
         if found_something:
             self._parsed_file = self.path_relative
+
+        return found_something
 
     def matches_output(self, file_to_check):
         """ "Are you my mother" test.
@@ -451,6 +471,7 @@ class Python(CodeParser):
     _extension = "py"
     _comment_start = "#"
     _comment_end = ""
+
 
 class Manual(CodeParser):
     """Manual downloader is used to give instructions for a manual step that isn't automated in code."""

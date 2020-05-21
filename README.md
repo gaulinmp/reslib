@@ -84,6 +84,10 @@ And create ``pipeline.png`` with the DAG graphed:
 ![pipeline.png](docs/_static/pipeline.png)
 
 
+Individual files can be omitted from the scan by adding the comment
+``RESLIB_IGNORE: True`` (will take ``true``, ``yes``, or ``1``, all case insensitive).
+
+
 The ``DependencyScanner`` has many settings, the salient ones being:
 
   - `project_root`: Path to 'root' directory, from which relative paths to input/output file dependencies will be calculated. (Default = ``'.'``)

@@ -107,6 +107,9 @@ Lastly, if the pipeline isn't a DAG because it is cyclic (File A creates a
 dataset for File B, which creates a dataset used in File A), the background will
 turn red, for ERROR!!!
 
+Individual files can be omitted from the scan by adding the comment
+``RESLIB_IGNORE: True`` (will take ``true``, ``yes``, or ``1``, all case insensitive).
+
 
 The ``DependencyScanner`` has many settings, the salient ones being:
 
