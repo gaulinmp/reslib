@@ -44,7 +44,7 @@ For example:
 
 .. code-block:: stata
 
-   /* INPUT: interim/dataset_from_python.dta */
+   /* INPUT_DATASET interim/dataset_from_python.dta */
    use "interim/dataset_from_python.dta"
 
 There are three such comments: ``INPUT`` (for when reading in a dataset),

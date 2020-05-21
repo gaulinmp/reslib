@@ -34,7 +34,7 @@ assume the following three files exist in the ~/projects/example folder:
 .. code-block:: sas
    :caption: code/data.sas
 
-    /* INPUT: funda.sas7bdat */
+    /* INPUT_DATASET funda.sas7bdat */
     PROC EXPORT DATA=funda OUTFILE= "data/stata_data.dta"; RUN;
     /* OUTPUT: stata_data.dta */
 
@@ -42,7 +42,7 @@ assume the following three files exist in the ~/projects/example folder:
 .. code-block:: stata
    :caption: code/load_data.do
 
-    /* INPUT: stata_data.dta */
+    /* INPUT_DATASET stata_data.dta */
     use "data/stata_data.dta", clear
 
 
@@ -106,6 +106,9 @@ Green indicates the files which were scanned, and grey indicates the datasets.
 Lastly, if the pipeline isn't a DAG because it is cyclic (File A creates a
 dataset for File B, which creates a dataset used in File A), the background will
 turn red, for ERROR!!!
+
+Individual files can be omitted from the scan by adding the comment
+``RESLIB_IGNORE: True`` (will take ``true``, ``yes``, or ``1``, all case insensitive).
 
 
 The ``DependencyScanner`` has many settings, the salient ones being:

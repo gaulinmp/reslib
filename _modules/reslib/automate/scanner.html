@@ -170,6 +170,8 @@
 <span class="sd">    | INPUT DATASETS --&gt; │   disk.                │ --&gt; OUTPUT DATASETS</span>
 <span class="sd">    |                    └────────────────────────┘</span>
 
+<span class="sd">Files can be ignored by adding the comment: RESLIB_IGNORE: True</span>
+
 <span class="sd">Uses reslib.automate.code_parser.CodeParser objects to extract comments from code, then calculates the dependency graph.</span>
 <span class="sd">This stemmed from ``doit graph``, but I wanted more flexibility.</span>
 
@@ -223,13 +225,13 @@
 <span class="sd">        Assume the following three files exist in the ``~/projects/example folder``:</span>
 
 <span class="sd">        ```code/data.sas</span>
-<span class="sd">            /* INPUT: funda.sas7bdat */</span>
+<span class="sd">            /* INPUT_DATASET funda.sas7bdat */</span>
 <span class="sd">            PROC EXPORT DATA=funda OUTFILE= &quot;data/stata_data.dta&quot;; RUN;</span>
 <span class="sd">            /* OUTPUT: stata_data.dta */</span>
 <span class="sd">        ```</span>
 
 <span class="sd">        ```code/load_data.do</span>
-<span class="sd">            /* INPUT: stata_data.dta */</span>
+<span class="sd">            /* INPUT_DATASET stata_data.dta */</span>
 <span class="sd">            use &quot;data/stata_data.dta&quot;</span>
 <span class="sd">        ```</span>
 
@@ -443,8 +445,10 @@
 
         <span class="n">filepath</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
         <span class="n">ext</span> <span class="o">=</span> <span class="n">ext</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">extsep</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;pdf&#39;</span>
-
-        <span class="n">Source</span><span class="p">(</span><span class="n">dot</span><span class="p">)</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="n">ext</span><span class="p">,</span> <span class="n">cleanup</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">Source</span><span class="p">(</span><span class="n">dot</span><span class="p">)</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="n">ext</span><span class="p">,</span> <span class="n">cleanup</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">NameError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Graphviz library not found, DAG plotting unavailable.&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">dot</span></div></div>
 </pre></div>

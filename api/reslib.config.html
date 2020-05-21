@@ -301,15 +301,15 @@ I suggest two solutions:</p>
 <dd class="field-even"><p>MIT, see LICENSE for more details.</p>
 </dd>
 </dl>
-<dl class="class">
+<dl class="py class">
 <dt id="reslib.config.Config">
-<em class="property">class </em><code class="sig-prename descclassname">reslib.config.</code><code class="sig-name descname">Config</code><span class="sig-paren">(</span><em class="sig-param">config_name=None</em>, <em class="sig-param">config_path=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/config.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.config.Config" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">reslib.config.</code><code class="sig-name descname">Config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">config_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/config.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.config.Config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>The config object for a project, which has config values as both
 dictionary objects as well as attributes.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="reslib.config.Config._get_config_path">
-<code class="sig-name descname">_get_config_path</code><span class="sig-paren">(</span><em class="sig-param">config_name='reslib.config'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/config.html#Config._get_config_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.config.Config._get_config_path" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">_get_config_path</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config_name</span><span class="o">=</span><span class="default_value">'reslib.config'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/config.html#Config._get_config_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.config.Config._get_config_path" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find the config file by name. The config file will be searched for by
 taking the current working directory, and looking for the <cite>config_name</cite>
 all the way up the directory tree until it hits the root.</p>
@@ -326,9 +326,9 @@ if <code class="docutils literal notranslate"><span class="pre">config_name</spa
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="reslib.config.Config._get_dict_from_file">
-<code class="sig-name descname">_get_dict_from_file</code><span class="sig-paren">(</span><em class="sig-param">config_path</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/config.html#Config._get_dict_from_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.config.Config._get_dict_from_file" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">_get_dict_from_file</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config_path</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/config.html#Config._get_dict_from_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.config.Config._get_dict_from_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Make a dictionary from a python or json file, based on extension.
 Only includes keys which are CAPITALIZED.</p>
 <p>If using a Python config file, the config file path is added into
@@ -364,9 +364,9 @@ completely comfortable with.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="reslib.config.Config._populate_from_dict">
-<code class="sig-name descname">_populate_from_dict</code><span class="sig-paren">(</span><em class="sig-param">config_dict</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/config.html#Config._populate_from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.config.Config._populate_from_dict" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">_populate_from_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config_dict</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/config.html#Config._populate_from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.config.Config._populate_from_dict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Populate the Config from a dictionary.</p>
 <p>NOTE: A python config file is <code class="docutils literal notranslate"><span class="pre">eval</span></code>-ed, so this is potentially an
 attack vector. Please don’t load a python config file you aren’t
@@ -388,9 +388,9 @@ completely comfortable with.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="reslib.config.Config._populate_from_file">
-<code class="sig-name descname">_populate_from_file</code><span class="sig-paren">(</span><em class="sig-param">config_path=None</em>, <em class="sig-param">silent=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/config.html#Config._populate_from_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.config.Config._populate_from_file" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">_populate_from_file</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">silent</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reslib/config.html#Config._populate_from_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reslib.config.Config._populate_from_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Populate the Config from a python or json file, based on extension.
 Only includes keys which are CAPITALIZED.</p>
 <p>NOTE: A python config file is <code class="docutils literal notranslate"><span class="pre">eval</span></code>-ed, so this is potentially an
