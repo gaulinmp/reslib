@@ -115,7 +115,7 @@ I suggest two solutions:
                     self.config_path = config_path or self._get_config_path(config_name)
                     self._populate_from_file(self.config_path, **kwargs)
 
-:copyright: (c) 2019 by Maclean Gaulin.
+:copyright: (c) 2025 by Maclean Gaulin.
 :license: MIT, see LICENSE for more details.
 """
 

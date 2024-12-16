@@ -19,7 +19,7 @@ Assumes files look something like this:
 Parses comments that look like "# INPUT_FILE:" or "# INPUT_DATASET:" or "# OUTPUT:" store them.
 Files can be ignored by adding the comment: "RESLIB_IGNORE: True"
 
-:copyright: (c) 2019 by Maclean Gaulin.
+:copyright: (c) 2025 by Maclean Gaulin.
 :license: MIT, see LICENSE for more details.
 """
 # STDlib imports

@@ -5,7 +5,7 @@ reslib.data.io
 
 This module contains the basic functionality for reading/writing data.
 
-:copyright: (c) 2019 by Maclean Gaulin.
+:copyright: (c) 2025 by Maclean Gaulin.
 :license: MIT, see LICENSE for more details.
 """
 

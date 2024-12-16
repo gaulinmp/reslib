@@ -20,7 +20,7 @@ import reslib
 
 project = reslib.__description__
 author = reslib.__author__
-copyright = '2019, {}'.format(author)
+copyright = '2025, {}'.format(author)
 
 # The short version
 version = reslib.__version__

@@ -7,7 +7,7 @@ reslib.data.cache
 
 This module contains the DatasetCache object for reading/writing cached datasets to disk.
 
-:copyright: (c) 2019 by Maclean Gaulin.
+:copyright: (c) 2025 by Maclean Gaulin.
 :license: MIT, see LICENSE for more details.
 """
 # STDlib imports
@@ -315,15 +315,15 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
 
         return self.read_func(self.path, **kwargs)
 
-    def _post_read_hook(self, read_data=None, **kwargs) -> "pd.DataFrame":
+    def _post_read_hook(self, df: "pd.DataFrame", **kwargs) -> "pd.DataFrame":
         # kwargs = {**self.read_args, **kwargs}
-        return read_data
+        return df
 
-    def _pre_write_hook(self, df, **kwargs) -> "pd.DataFrame":
+    def _pre_write_hook(self, df: "pd.DataFrame", **kwargs) -> "pd.DataFrame":
         # kwargs = {**self.prewrite_args, **kwargs}
         return df
 
-    def _write(self, df, **kwargs) -> "pd.DataFrame":
+    def _write(self, df: "pd.DataFrame", **kwargs) -> "pd.DataFrame":
         """
         Writes DataFrame (`df`) to cache if it is not None,
         otherwise writes original_df= argument.
@@ -342,7 +342,7 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
 
         return df
 
-    def _post_write_hook(self, df, **kwargs) -> "pd.DataFrame":
+    def _post_write_hook(self, df: "pd.DataFrame", **kwargs) -> "pd.DataFrame":
         """
         Runs after _write(), and returns the dataframe.
 

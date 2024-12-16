@@ -19,7 +19,7 @@ Files can be ignored by adding the comment: RESLIB_IGNORE: True
 Uses reslib.automate.code_parser.CodeParser objects to extract comments from code, then calculates the dependency graph.
 This stemmed from ``doit graph``, but I wanted more flexibility.
 
-:copyright: (c) 2019 by Maclean Gaulin.
+:copyright: (c) 2025 by Maclean Gaulin.
 :license: MIT, see LICENSE for more details.
 """
 # STDlib imports
