@@ -16,7 +16,7 @@ Assumes files look something like this:
     |                    └────────────────────────┘
 
 
-Parses comments that look like "# INPUT_FILE:" or "# INPUT_DATASET:" or "# OUTPUT_DATASET:" store them.
+Parses comments that look like "# INPUT_FILE:" or "# INPUT_DATASET:" or "# OUTPUT:" store them.
 Files can be ignored by adding the comment: "RESLIB_IGNORE: True"
 
 :copyright: (c) 2019 by Maclean Gaulin.
@@ -53,6 +53,7 @@ class CodeParserMetaclass(type):
         new_class = super().__new__(cls, name, bases, attrs)
 
         def lastattr(attr_name, use_dict=None, first_non_empty=False):
+            """Get last attribute set on hierarchical classes"""
             if use_dict is not None:
                 return use_dict.get(attr_name, None)
             # Otherwise return the last attribute from the the stack of class inheretence
@@ -155,7 +156,8 @@ class CodeParser(metaclass=CodeParserMetaclass):
 
     """
 
-    #: Relative path of the code to be analyzed, relative to ``os.path.join(project_root, code_path_prefix)``. Defaults to None, which means no file has been scanned.
+    #: Relative path of the code to be analyzed, relative to ``os.path.join(project_root, code_path_prefix)``.
+    #  Defaults to None, which means no file has been scanned.
     path_relative = None
     #: Absolute path of the code to be analyzed. Defaults to None, which means no file has been scanned.
     path_absolute = None
@@ -198,6 +200,7 @@ class CodeParser(metaclass=CodeParserMetaclass):
         data_path_prefix=None,
         **kwargs,
     ):
+
         self.config = kwargs
 
         for k, v in kwargs.items():
@@ -331,9 +334,9 @@ class CodeParser(metaclass=CodeParserMetaclass):
         except UnicodeDecodeError as e:
             raise UnicodeDecodeError(f"Unicode decode error: {self.path_absolute}") from e
 
-        return self.analyze_code(code)
+        return self.analyze_code(code, current_dir=os.path.dirname(self.path_absolute))
 
-    def analyze_code(self, code):
+    def analyze_code(self, code, current_dir=None):
         """Analyze the text of the file.
 
         Args:
@@ -355,7 +358,19 @@ class CodeParser(metaclass=CodeParserMetaclass):
         ):
 
             for _pth in _regex.finditer(code):
-                _set.add(_clnpth(_pth.group(1)))
+                _found_path = _pth.group(1).strip()
+
+                # Check if the path is relative, if so append current dir
+                _found_rel = _found_path.startswith('.\\') or _found_path.startswith('./')
+
+                # Tack on current_dir if it's not empty
+                if _found_rel and current_dir is not None:
+                    _found_path = os.path.relpath(_pthjoin(current_dir, _found_path), self.project_root)
+
+                _found_path = _clnpth(_found_path)
+
+                # Save the corrected path to the list we're aggregating
+                _set.add(_found_path)
 
                 # We found something, this is a file worth 'keeping'
                 found_something = True
@@ -461,8 +476,16 @@ class Stata(CodeParser):
 class Notebook(CodeParser):
     _language = "notebook"
     _extension = "ipynb"
-    _comment_start = '"#'
+    _comment_start = '"\s*#'
     _comment_end = '\\\\n",?'
+    _comment_start_regex = True
+    _comment_end_regex = True
+
+class StataNotebook(CodeParser):
+    _language = "statanotebook"
+    _extension = "ipynb"
+    _comment_start = '"/*'
+    _comment_end = '[*]/\\\\n",?'
     _comment_end_regex = True
 
 
@@ -470,6 +493,13 @@ class Python(CodeParser):
     _language = "python"
     _extension = "py"
     _comment_start = "#"
+    _comment_end = ""
+
+
+class Latex(CodeParser):
+    _language = "latex"
+    _extension = "tex"
+    _comment_start = "%"
     _comment_end = ""
 
 

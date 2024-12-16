@@ -29,17 +29,17 @@ import logging
 from io import StringIO
 
 # Local logger
-logger = logging.getLogger(__name__)
+__logger = logging.getLogger(__name__)
 
 # 3rd party package imports
 try:
     import networkx as nx
 except ModuleNotFoundError:
-    logger.warning("NetworkX library not found, DAG functionality unavailable.")
+    __logger.warning("NetworkX library not found, DAG functionality unavailable.")
 try:
     from graphviz import Source
 except ModuleNotFoundError:
-    logger.warning("Graphviz library not found, DAG plotting unavailable.")
+    __logger.warning("Graphviz library not found, DAG plotting unavailable.")
 
 # project imports
 from reslib.automate import cleanpath as _clnpth
@@ -113,6 +113,7 @@ class DependencyScanner:
     _scanned_code = None
 
     # Private attributes
+    #: Directories to ignore when scanning for files.
     _ignore_folders = {".git", ".ipynb_checkpoints", "__pycache__"}
 
     def __init__(self, *parsers, project_root=".", code_path_prefix=None, data_path_prefix=None, ignore_folders=None):
@@ -136,7 +137,7 @@ class DependencyScanner:
 
         # Verify that ignore_folders is a set
         if ignore_folders is not None:
-            self._ignore_folders = set(ignore_folders)
+            self._ignore_folders |= set((re.sub(r'[\\/\.]+', '/', x.strip('./\\')) for x in ignore_folders))
 
         self._scanned_code = None
 
@@ -169,16 +170,21 @@ class DependencyScanner:
         if self.code_path_prefix is not None:
             start_dir = _pthjoin(start_dir, self.code_path_prefix)
 
+        __logger.debug(f"Scanner.scan:: Starting to scan over: {start_dir}")
         for _dir, _, _files in os.walk(start_dir):
             # Ignore if the ignore_folders are anywhere in the path
-            if len(set(_dir.split(os.path.sep)) & self._ignore_folders):
+            if any(x in _dir for x in self._ignore_folders):
+                __logger.debug("Skipping directory: {}".format(_dir))
                 continue
+
             for _file in _files:
                 path = _clnpth(_pthjoin(_dir, _file))
                 for parser in self.parser_list:
                     if not parser.matches(path):
                         continue
+
                     # Create the parser object with this code path
+                    __logger.debug(f"Scanner.scan:: Scanning: {_file}")
                     res = parser(
                         path_absolute=path,
                         project_root=self.project_root,
@@ -187,9 +193,12 @@ class DependencyScanner:
                     )
 
                     if res.is_parsed:
+                        __logger.debug(f"Scanner.scan:: Added: {res}")
                         self._scanned_code.append(res)
 
-                    break  # break out of parser_list, we found our match
+                        break  # break out of parser_list, we found our match
+                    else:
+                        __logger.debug(f"Scanner.scan:: Failed to parse: {path} with {parser._input_dataset_comment_regex}")
 
         return self._scanned_code
 
@@ -292,6 +301,6 @@ class DependencyScanner:
         try:
             Source(dot).render(filepath, format=ext, cleanup=True)
         except NameError as e:
-            logger.error("Graphviz library not found, DAG plotting unavailable.")
+            __logger.error("Graphviz library not found, DAG plotting unavailable.")
 
         return dot

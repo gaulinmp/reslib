@@ -42,5 +42,5 @@ def pathjoin(*paths):
 
 
 # These have to go after cleanpath/pathjoin, because scanner/code_parser use both
-from reslib.automate.code_parser import (SAS, Stata, Notebook, Python, Manual)
+from reslib.automate.code_parser import (SAS, Stata, Notebook, Python, Manual, Latex, StataNotebook)
 from reslib.automate.scanner import DependencyScanner

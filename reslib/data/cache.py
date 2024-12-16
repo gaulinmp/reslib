@@ -13,6 +13,9 @@ This module contains the DatasetCache object for reading/writing cached datasets
 # STDlib imports
 import os
 import logging
+import datetime as dt
+from pathlib import Path
+from typing import Union
 
 # 3rd party package imports
 # import numpy as np
@@ -22,8 +25,8 @@ import pandas as pd
 from reslib.config import Config
 
 
-# Local logger
-logger = logging.getLogger(__name__)
+# Local __logger
+__logger = logging.getLogger(__name__)
 
 
 class ReadWriteArgCopyToDescendants(type):
@@ -92,21 +95,24 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
                 pass
     """
 
-    #: Full path to the dataset.
-    path = None
+    # Resultant path of the file
+    path: Union[str, Path] = None
     #: Override directory to store the dataset in.
-    override_directory = None
+    override_directory: Union[str, Path] = None
     #: Override filename to name the dataset.
-    filename = None
+    filename: str = None
     #: DataFrame of the data
-    df = None
+    df: "pd.DataFrame" = None
 
     # These arguments are copied to all children, so manually overwrite
     # in a child class if they don't apply there.
-    write_args = {"sep": "\t", "index": False}
-    read_args = {"sep": "\t"}
+    file_format: str = "csv"
+    write_func: callable = None
+    read_func: callable = None
+    write_args: dict = {"index": False}
+    read_args: dict = {}
 
-    def __init__(self, override_filename=None, delete_cache=False):
+    def __init__(self, override_filename: str = None, delete_cache: Union[bool, str] = False, file_format: str = "csv"):
         """
         Create new cache object. Sets the following attributes:
 
@@ -143,22 +149,65 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
         Args:
             override_filename (str): Filename to write the dataset to,
                 overriding the default. Ignored if equal to `None`.
-            delete_cache (bool): Flag to delete cache, if it exists.
+            delete_cache (bool | str): Flag to delete cache, if it exists. Can pass in string to add to the old cache file as backup, or 'date' to add the modified date to the old cache file.
+            file_format (str): File format to use from {'csv', 'tab', 'tsv',
+                'h5', 'hdf', 'hdf5', 'stata', 'parquet'}. Default: csv
         """
         # compression = None means no compression.
         # So figuring out the preferred compression is a bit verbose below.
         compression = Config().get("COMPRESSION", None)
-        self.compression = {**self.write_args, **self.read_args}.get("compression", compression)
+        self.compression: dict = {**self.write_args, **self.read_args}.get("compression", compression)
 
         # Set extension based on write_args separator, default = ','/.csv
-        self.extension = "csv"
-        if self.write_args.get("sep", ",") == "\t":
-            self.extension = "tab"
-        # If there's compression set, add the right extension
-        if self.compression == "gzip":
-            self.extension += ".gz"
-        elif self.compression in ("bz2", "zip", "xz"):
-            self.extension += "." + self.compression
+        if self.file_format in ["h5", "hdf5", "hdf"]:
+            self.write_func = pd.DataFrame.to_hdf
+            self.read_func = pd.read_hdf
+            if "key" not in self.write_args:
+                self.write_args["key"] = "data"
+            if "key" not in self.read_args:
+                self.read_args["key"] = "data"
+            self.extension = "h5"
+
+        elif self.file_format in ["stata", "dta"]:
+            self.write_func = pd.DataFrame.to_stata
+            self.read_func = pd.read_stata
+            self.extension = "dta"
+            if "index" in self.write_args:
+                del self.write_args["index"]
+            if "write_index" not in self.write_args:
+                self.write_args["write_index"] = False
+
+        elif self.file_format in ["parquet"]:
+            self.write_func = pd.DataFrame.to_parquet
+            self.read_func = pd.read_parquet
+            self.extension = "parquet"
+
+        elif self.file_format in ["csv", "tab", "tsv"]:
+            self.write_func = pd.DataFrame.to_csv
+            self.read_func = pd.read_csv
+
+            self.extension = self.file_format
+
+            if self.extension in ["tab", "tsv"]:
+                self.write_args["sep"] = "\t"
+                self.read_args["sep"] = "\t"
+            elif self.write_args.get("sep", ",") == "\t":
+                self.extension = "tab"
+                self.read_args["sep"] = "\t"
+
+            # If there's compression set, add the right extension
+            if self.compression == "gzip":
+                self.extension += ".gz"
+            elif self.compression in ("bz2", "zip", "xz"):
+                self.extension += "." + self.compression
+        else:
+            if self.write_func is None or self.read_func is None:
+                __logger.error("Unknown file format %r, and write/read functions are null", self.file_format)
+            else:
+                __logger.warning(
+                    "Unknown file format %r, but write/read functions set so hopefully this is planned behavior",
+                    self.file_format,
+                )
 
         if override_filename is not None:
             self.filename = override_filename
@@ -172,10 +221,16 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
             data_dir = Config().get("DATA_DIR_INTERIM", ".")
         self.path = os.path.join(data_dir, f"{self.filename}.{self.extension}")
 
-        if delete_cache:
-            self.delete_cache()
+        __logger.debug("file_format: %r, path: %r", self.file_format, self.path)
+        __logger.debug("write_func: %r", self.write_func)
+        __logger.debug("write_args: %r", self.write_args)
+        __logger.debug("read_func: %r", self.read_func)
+        __logger.debug("read_args: %r", self.read_args)
 
-    def make_dataset(self):
+        if delete_cache:
+            self.delete_cache(backup=delete_cache)
+
+    def make_dataset(self) -> "pd.DataFrame":
         """
         Make dataset to be saved to cache.
 
@@ -184,7 +239,7 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
         raise NotImplementedError
 
     @property
-    def data(self):
+    def data(self) -> "pd.DataFrame":
         """
         Property accessor for the underlying dataframe.
         Loads cached dataframe into memory, calling
@@ -198,7 +253,7 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
 
         return self.df
 
-    def read(self, read_args=None):
+    def read(self, read_args=None) -> "pd.DataFrame":
         """
         Read df from cache, returning 'cleaned' df.
 
@@ -218,7 +273,7 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
 
         return self._post_read_hook(read_df)
 
-    def write(self, df, overwrite_cache=False, write_args=None):
+    def write(self, df, overwrite_cache=False, write_args=None) -> "pd.DataFrame":
         """
         Write df to cache, returning 'cleaned' df.
 
@@ -232,7 +287,7 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
             raise ValueError(f"{self.__class__}.write: Requires df input as first argument.")
 
         if self.is_cached and not overwrite_cache:
-            logger.info("Not writing Data Frame to disk as it already exists.")
+            __logger.info("Not writing Data Frame to disk as it already exists.")
             return df
 
         prewrite = self._pre_write_hook(df, overwrite_cache=overwrite_cache)
@@ -248,7 +303,7 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
         # kwargs = {**self.read_args, **kwargs}
         return None
 
-    def _read(self, **kwargs):
+    def _read(self, **kwargs) -> "pd.DataFrame":
         """
         Inner read function.
         Can take data from _pre_read_hook via 'preread' argument.
@@ -258,17 +313,17 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
         # Add passed in kwargs to the default read_args.
         kwargs = {**self.read_args, **kwargs}
 
-        return pd.read_csv(self.path, **kwargs)
+        return self.read_func(self.path, **kwargs)
 
-    def _post_read_hook(self, read_data=None, **kwargs):
+    def _post_read_hook(self, read_data=None, **kwargs) -> "pd.DataFrame":
         # kwargs = {**self.read_args, **kwargs}
         return read_data
 
-    def _pre_write_hook(self, df, **kwargs):
+    def _pre_write_hook(self, df, **kwargs) -> "pd.DataFrame":
         # kwargs = {**self.prewrite_args, **kwargs}
         return df
 
-    def _write(self, df, **kwargs):
+    def _write(self, df, **kwargs) -> "pd.DataFrame":
         """
         Writes DataFrame (`df`) to cache if it is not None,
         otherwise writes original_df= argument.
@@ -283,11 +338,11 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
         # Add passed in kwargs to the default write_args.
         kwargs = {**self.write_args, **kwargs}
 
-        df.to_csv(self.path, **kwargs)
+        self.write_func(df, self.path, **kwargs)
 
         return df
 
-    def _post_write_hook(self, df, **kwargs):
+    def _post_write_hook(self, df, **kwargs) -> "pd.DataFrame":
         """
         Runs after _write(), and returns the dataframe.
 
@@ -299,17 +354,34 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
         # return df
         return self.read()
 
-    def delete_cache(self):
+    def delete_cache(self, backup="date") -> None:
         """
         Method for deleting cached file if it exists.
+
+        Args:
+            backup (bool | str): Flag to delete cache, if it exists. Can pass in string to add to the old cache file as backup, or 'date' to add the modified date to the old cache file. If False, just deletes the cache file.
         """
+        if not backup:
+            try:
+                os.remove(self.path)
+            except FileNotFoundError:
+                pass
+            return
+        # Backup the old cache file
+        if backup == "date":
+            backup = dt.datetime.fromtimestamp(Path(self.path).stats().st_mtime).strftime("%Y-%m-%d")
+        elif backup is True:
+            backup = "backup"
+
+        _ext = ''.join(Path(self.path).suffixes)
+        _newp = str(self.path).replace(_ext, f".{backup}{_ext}")
         try:
-            os.remove(self.path)
+            os.rename(self.path, _newp)
         except FileNotFoundError:
             pass
 
     @property
-    def is_cached(self):
+    def is_cached(self) -> bool:
         """
         Boolean value for whether cached file exists at `path`.
         """
