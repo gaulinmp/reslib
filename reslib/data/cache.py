@@ -25,8 +25,8 @@ import pandas as pd
 from reslib.config import Config
 
 
-# Local __logger
-__logger = logging.getLogger(__name__)
+# Local _logger
+_logger = logging.getLogger(__name__)
 
 
 class ReadWriteArgCopyToDescendants(type):
@@ -202,9 +202,9 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
                 self.extension += "." + self.compression
         else:
             if self.write_func is None or self.read_func is None:
-                __logger.error("Unknown file format %r, and write/read functions are null", self.file_format)
+                _logger.error("Unknown file format %r, and write/read functions are null", self.file_format)
             else:
-                __logger.warning(
+                _logger.warning(
                     "Unknown file format %r, but write/read functions set so hopefully this is planned behavior",
                     self.file_format,
                 )
@@ -221,11 +221,11 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
             data_dir = Config().get("DATA_DIR_INTERIM", ".")
         self.path = os.path.join(data_dir, f"{self.filename}.{self.extension}")
 
-        __logger.debug("file_format: %r, path: %r", self.file_format, self.path)
-        __logger.debug("write_func: %r", self.write_func)
-        __logger.debug("write_args: %r", self.write_args)
-        __logger.debug("read_func: %r", self.read_func)
-        __logger.debug("read_args: %r", self.read_args)
+        _logger.debug("file_format: %r, path: %r", self.file_format, self.path)
+        _logger.debug("write_func: %r", self.write_func)
+        _logger.debug("write_args: %r", self.write_args)
+        _logger.debug("read_func: %r", self.read_func)
+        _logger.debug("read_args: %r", self.read_args)
 
         if delete_cache:
             self.delete_cache(backup=delete_cache)
@@ -246,9 +246,11 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
         `make_dataset()` if no cache is available.
         """
         if not self.is_cached:
+            _logger.debug("Cached file not found, creating new dataset.")
             self.write(self.make_dataset())
 
         if self.df is None:
+            _logger.debug("Cached file found, reading dataset.")
             self.df = self.read()
 
         return self.df
@@ -287,7 +289,7 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
             raise ValueError(f"{self.__class__}.write: Requires df input as first argument.")
 
         if self.is_cached and not overwrite_cache:
-            __logger.info("Not writing Data Frame to disk as it already exists.")
+            _logger.debug("Not writing Data Frame to disk as it already exists.")
             return df
 
         prewrite = self._pre_write_hook(df, overwrite_cache=overwrite_cache)
@@ -363,6 +365,7 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
         """
         if not backup:
             try:
+                _logger.debug("Deleting cache file %r", self.path)
                 os.remove(self.path)
             except FileNotFoundError:
                 pass
@@ -376,6 +379,7 @@ class DataFrameCache(metaclass=ReadWriteArgCopyToDescendants):
         _ext = ''.join(Path(self.path).suffixes)
         _newp = str(self.path).replace(_ext, f".{backup}{_ext}")
         try:
+            _logger.debug("Backing up cache file %r to %r", self.path, _newp)
             os.rename(self.path, _newp)
         except FileNotFoundError:
             pass

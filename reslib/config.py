@@ -49,8 +49,8 @@ Example config file:
 An example setup for config is the following directory structure::
 
     ├── project_python_library
-    │   ├── globals.py
-    │   └── __init__.py
+    │   ├── globals.py
+    │   └── __init__.py
     └── notebooks
         └── 0_imports.ipynb
 
@@ -127,7 +127,7 @@ import json
 # 3rd party package imports
 
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class Config:
@@ -159,25 +159,25 @@ class Config:
         self.__dict__ = self.__borg_data
 
         if not self.__is_initialized:
-            logger.debug("Config loading.")
+            _logger.debug("Config loading.")
 
             # Set the config_path based on input arguments (or default)
             self.config_path = config_path or self._get_config_path(config_name)
-            logger.debug("\tconfig_name: %s", config_name)
-            logger.debug("\tconfig_path: %s", config_path)
-            logger.debug("\tself.config_path: %s", self.config_path)
+            _logger.debug("\tconfig_name: %s", config_name)
+            _logger.debug("\tconfig_path: %s", config_path)
+            _logger.debug("\tself.config_path: %s", self.config_path)
 
             # Load config file if found
             self._populate_from_file(self.config_path, silent=True)
-            logger.debug("\tLoaded from file: %r", self)
+            _logger.debug("\tLoaded from file: %r", self)
 
             # Load overrides (does nothing if none provided)
             self._populate_from_dict(kwargs)
             if kwargs:
-                logger.debug("\tLoaded from kwargs: %r", kwargs)
+                _logger.debug("\tLoaded from kwargs: %r", kwargs)
 
             self.__is_initialized = True
-            logger.info("\tDone initialization: %r", self)
+            _logger.info("\tDone initialization: %r", self)
 
     def get(self, *key_and_default, **default_maybe):
         if len(key_and_default) == 1 and "default" not in default_maybe:
@@ -220,7 +220,7 @@ class Config:
 
         last_dir = None
         this_dir = os.path.abspath(config_name)
-        logging.debug("Searching this_dir: %r", this_dir)
+        _logger.debug("Searching this_dir: %r", this_dir)
 
         while last_dir != this_dir:
             # Search dir for config_name (then plus extensions)
@@ -228,7 +228,7 @@ class Config:
                 check_path = os.path.join(this_dir, config_name + ext)
                 if os.path.exists(check_path):
                     return check_path
-                logging.debug("Can't find %r%r in %r", config_name, ext, check_path)
+                _logger.debug("Can't find \"%s%s\" in \"%s\"", config_name, ext, check_path)
 
             last_dir, this_dir = this_dir, os.path.dirname(this_dir)
 
@@ -264,11 +264,11 @@ class Config:
 
         # Load json
         if ext == ".json":
-            logger.debug("Loading json dict file from %r", config_path)
+            _logger.debug("Loading json dict file from %r", config_path)
             with open(config_path, mode="r", **kwargs) as fh:
                 obj = json.load(fh)
         elif ext == ".py":
-            logger.debug("Loading python dict file from %r", config_path)
+            _logger.debug("Loading python dict file from %r", config_path)
             with open(config_path, mode="rb", **kwargs) as fh:
                 obj = {"config_path": config_path}
                 exec(compile(fh.read(), config_path, "exec"), obj)
@@ -301,7 +301,7 @@ class Config:
         try:
             obj = self._get_dict_from_file(config_path=config_path, **kwargs)
         except FileNotFoundError:
-            logger.warning("Load Config error: file not found: %s", config_path)
+            _logger.warning("Load Config error: file not found: %s", config_path)
             if not silent:
                 raise
 
