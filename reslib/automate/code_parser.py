@@ -22,6 +22,7 @@ Files can be ignored by adding the comment: "RESLIB_IGNORE: True"
 :copyright: (c) 2025 by Maclean Gaulin.
 :license: MIT, see LICENSE for more details.
 """
+
 # STDlib imports
 import os
 import re
@@ -38,77 +39,7 @@ from reslib.automate import pathjoin as _pthjoin
 logger = logging.getLogger(__name__)
 
 
-
-class CodeParserMetaclass(type):
-    """
-    Compile a CodeParser class to include the regex and parsing functionality.
-
-    This allows for ``SAS.matches`` instead of ``SAS().matches``
-    """
-
-    def __new__(cls, name, bases, attrs):
-        if name.startswith("None"):
-            return None
-
-        new_class = super().__new__(cls, name, bases, attrs)
-
-        def lastattr(attr_name, use_dict=None, first_non_empty=False):
-            """Get last attribute set on hierarchical classes"""
-            if use_dict is not None:
-                return use_dict.get(attr_name, None)
-            # Otherwise return the last attribute from the the stack of class inheretence
-            a = list(getattr(bc, attr_name, {}) for bc in bases + (new_class,))
-            if first_non_empty:
-                for x in reversed(a):
-                    if x is not None:
-                        return x
-            return a[-1]
-
-        # SET FILE SEARCH REGEX - Do not inheret, recalculate every time.
-        f_regex = lastattr("_file_match_regex", attrs)
-
-        if isinstance(f_regex, str):
-            try:
-                f_regex = re.compile(f_regex)
-            except (TypeError, re.error) as e:
-                f_regex = None
-
-        # Otherwise just use the extension to match
-        # (a failure to compile re above defaults to this too)
-        if f_regex is None:
-            try:
-                f_regex = re.compile(r"\.{}$".format(re.escape(lastattr("_extension"))), re.I)
-            except (TypeError, re.error) as e:
-                # Accept anything with an extension
-                f_regex = re.compile(r"\.[^.]*$")
-
-        new_class._file_match_regex = f_regex
-
-        # SET CODE SEARCH REGEXES
-        def recomp(re_flags=re.MULTILINE, **kwargs):
-            # If start/end is in kwargs, skip the following.
-            # If comment_*_regex is true, don't add to kwargs until after re.escape
-            for c in "start end".split():
-                if c not in kwargs and not lastattr(f"_comment_{c}_regex"):
-                    kwargs[c] = lastattr(f"_comment_{c}")
-
-            kwargs = {k: re.escape(v) for k, v in kwargs.items()}
-
-            for c in "start end".split():
-                if c not in kwargs:
-                    kwargs[c] = lastattr(f"_comment_{c}")
-
-            return re.compile("^\s*{start}\s*{text}:\s*(.+)\s*{end}\s*$".format(**kwargs), flags=re_flags)
-
-        new_class._ignore_comment_regex = recomp(text=lastattr("_ignore_comment_text"))
-        new_class._input_dataset_comment_regex = recomp(text=lastattr("_input_dataset_comment_text"))
-        new_class._input_file_comment_regex = recomp(text=lastattr("_input_file_comment_text"))
-        new_class._output_dataset_comment_regex = recomp(text=lastattr("_output_dataset_comment_text"))
-
-        return new_class
-
-
-class CodeParser(metaclass=CodeParserMetaclass):
+class CodeParser:
     """CodeParser imagines a file as something that takes input, and makes output:
 
         |                    ┌────────────────────────┐
@@ -177,7 +108,7 @@ class CodeParser(metaclass=CodeParserMetaclass):
 
     _language = "text"
     _extension = "txt"
-    _file_match_regex = None
+    _file_match_regex_pattern = None
     _file_encoding = "utf-8"
     _comment_start = "/*"  # TODO: implement list of start/stop pairs later
     _comment_start_regex = False  # TODO: implement matching list of false/trues
@@ -200,67 +131,93 @@ class CodeParser(metaclass=CodeParserMetaclass):
         data_path_prefix=None,
         **kwargs,
     ):
+        self.config = {
+            "path_relative": path_relative,
+            "path_absolute": path_absolute,
+            "project_root": project_root,
+            "code_path_prefix": code_path_prefix,
+            "data_path_prefix": data_path_prefix,
+            **kwargs,
+        }
 
-        self.config = kwargs
-
+        # Allow for setting attributes upon object instantiation
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-        self.set_path(
-            path_relative=path_relative,
-            path_absolute=path_absolute,
-            project_root=project_root,
-            code_path_prefix=code_path_prefix,
-            data_path_prefix=data_path_prefix,
-        )
+        if path_relative is not None or path_absolute is not None:
+            self.set_path(
+                path_relative=path_relative,
+                path_absolute=path_absolute,
+                project_root=project_root,
+                code_path_prefix=code_path_prefix,
+                data_path_prefix=data_path_prefix,
+            )
 
-        if self.path_relative is not None:
             self.analyze()
 
-    def __repr__(self):
-        s = [self._language.capitalize()]
-
+    @property
+    def _file_match_regex(self):
+        """Compile regex pattern for matching files based on extension or custom pattern."""
+        # Check if we have a custom file match regex
         try:
-            s.append(f" (I:{len(self.input_files)+len(self.input_datasets)}/O:{len(self.output_datasets)})")
-            s.append(f" {self.path_relative}")
-        except AttributeError:
-            s.append(" (unparsed)")
+            return re.compile(self._file_match_regex_pattern, re.IGNORECASE)
+        except (TypeError, re.error):
+            pass
 
-        return f"<{''.join(s)}>"
+        # Fall back to extension-based matching
+        try:
+            return re.compile(r"\.{}$".format(re.escape(self._extension)), re.IGNORECASE)
+        except (TypeError, re.error):
+            # Accept anything with an extension
+            return re.compile(r"\.[^.]*$")
 
-    def __str__(self):
-        s = [f"{self._language.capitalize()}:: {str(self.path_relative)}"]
+    # SET CODE SEARCH REGEXES
+    def _compile_comment_regex(self, text, start=None, end=None):
+        # If start/end is in kwargs, skip the following.
+        # If comment_*_regex is true, don't re.escape
+        if start is None:
+            start = getattr(self, "_comment_start", "") or ""
+        if not self._comment_start_regex:
+            start = re.escape(self._comment_start)
 
+        if end is None:
+            end = getattr(self, "_comment_end", "") or ""
+        if not self._comment_end_regex:
+            end = re.escape(self._comment_end)
 
-        s.append(f"\tINPUT FILES (found {len(self.input_files)}):")
-        for f in sorted(self.input_files):
-            s.append(f"\t\t{f}")
+        return re.compile(rf"^\s*{start}\s*{text}:\s*(.+)\s*{end}\s*$", flags=re.MULTILINE)
 
-        s.append(f"\tINPUT DATASETS (found {len(self.input_datasets)}):")
-        for f in sorted(self.input_datasets):
-            s.append(f"\t\t{f}")
+    @property
+    def _ignore_comment_regex(self):
+        """Compile regex pattern for ignore comments."""
+        return self._compile_comment_regex(self._ignore_comment_text)
 
-        s.append(f"\tOUTPUT DATASETS (found {len(self.output_datasets)}):")
-        for f in sorted(self.output_datasets):
-            s.append(f"\t\t{f}")
+    @property
+    def _input_file_comment_regex(self):
+        """Compile regex pattern for input file comments."""
+        return self._compile_comment_regex(self._input_file_comment_text)
 
-        s.append(f"\tProject Root: {self.project_root}")
-        if self.code_path_prefix is not None:
-            s.append(f"\tCode Prefix: {self.code_path_prefix}")
-        if self.data_path_prefix is not None:
-            s.append(f"\tData Prefix: {self.data_path_prefix}")
-        return "\n".join(s)
+    @property
+    def _input_dataset_comment_regex(self):
+        """Compile regex pattern for input dataset comments."""
+        return self._compile_comment_regex(self._input_dataset_comment_text)
 
-    @classmethod
-    def matches(cls, path_relative):
-        return bool(cls._file_match_regex.search(path_relative))
+    @property
+    def _output_dataset_comment_regex(self):
+        """Compile regex pattern for output dataset comments."""
+        return self._compile_comment_regex(self._output_dataset_comment_text)
 
     @property
     def is_parsed(self):
         return self._parsed_file is not None and self.path_relative == self._parsed_file
 
     def set_path(
-        self, path_relative=None, path_absolute=None, project_root=".", code_path_prefix=None, data_path_prefix=None
+        self,
+        path_relative=None,
+        path_absolute=None,
+        project_root=".",
+        code_path_prefix=None,
+        data_path_prefix=None,
     ):
         """Set the file path of the analyzed object, and calculate its relative position to base_dir.
 
@@ -299,6 +256,13 @@ class CodeParser(metaclass=CodeParserMetaclass):
             # Recalculate the path_absolute to the code file
             self.path_absolute = _pthjoin(self.project_root, self.code_path_prefix, self.path_relative)
 
+        logger.debug(f"{self.__class__.__name__}.set_path(): {self.path_relative} (absolute: {self.path_absolute})")
+
+    def matches(self, path_relative):
+        """Check if a file path matches this parser's file pattern."""
+        # Create a temporary instance to access the regex property
+        return bool(self._file_match_regex.search(path_relative))
+
     def analyze(self, path_relative=None, path_absolute=None):
         """
         Analyze the actual file.
@@ -314,7 +278,7 @@ class CodeParser(metaclass=CodeParserMetaclass):
         Raises:
             UnicodeDecodeError: Raised if file is not encoded according to self._file_encoding (default: utf-8)
         """
-        if path_relative is not None:
+        if path_relative is not None or path_absolute is not None:
             self.set_path(
                 path_relative=path_relative,
                 path_absolute=path_absolute,
@@ -326,7 +290,12 @@ class CodeParser(metaclass=CodeParserMetaclass):
         if self.path_absolute is None:
             raise FileNotFoundError("File path must be specified in init or as first argument to analyze().")
 
-        logger.debug("%r.analyze(): %r (from %r)", self.__class__, self.path_relative, self.project_root)
+        logger.debug(
+            "%r.analyze(): %r (from %r)",
+            self.__class__,
+            self.path_relative,
+            self.project_root,
+        )
 
         try:
             with open(self.path_absolute, encoding=self._file_encoding) as fh:
@@ -348,7 +317,7 @@ class CodeParser(metaclass=CodeParserMetaclass):
         found_something = False
 
         ignore = self._ignore_comment_regex.search(code)
-        if ignore and ignore.group(1).strip().lower() in ('true', 'yes', '1'):
+        if ignore and ignore.group(1).strip().lower() in ("true", "yes", "1"):
             return False
 
         for _regex, _set in (
@@ -356,12 +325,11 @@ class CodeParser(metaclass=CodeParserMetaclass):
             (self._input_dataset_comment_regex, self.input_datasets),
             (self._output_dataset_comment_regex, self.output_datasets),
         ):
-
             for _pth in _regex.finditer(code):
                 _found_path = _pth.group(1).strip()
 
                 # Check if the path is relative, if so append current dir
-                _found_rel = _found_path.startswith('.\\') or _found_path.startswith('./')
+                _found_rel = _found_path.startswith(".\\") or _found_path.startswith("./")
 
                 # Tack on current_dir if it's not empty
                 if _found_rel and current_dir is not None:
@@ -377,6 +345,21 @@ class CodeParser(metaclass=CodeParserMetaclass):
 
         if found_something:
             self._parsed_file = self.path_relative
+            logger.debug(f"{self.__class__.__name__}.analyze_code(): found in {self._parsed_file} ")
+            if self.input_files:
+                logger.debug(
+                    f"{'':>{len(self.__class__.__name__)+16}s} INPUT_FILES: {', '.join(sorted(self.input_files))}"
+                )
+            if self.input_datasets:
+                logger.debug(
+                    f"{'':>{len(self.__class__.__name__)+16}s} INPUT_DATASETS: {', '.join(sorted(self.input_datasets))}"
+                )
+            if self.output_datasets:
+                logger.debug(
+                    f"{'':>{len(self.__class__.__name__)+16}s} OUTPUT_DATASETS: {', '.join(sorted(self.output_datasets))}"
+                )
+        else:
+            logger.debug(f"{self.__class__.__name__}.analyze_code(): no dependencies found in {self._parsed_file}")
 
         return found_something
 
@@ -462,6 +445,39 @@ class CodeParser(metaclass=CodeParserMetaclass):
 
         return matching_outputs_to_inputs
 
+    def __repr__(self):
+        s = [self._language.capitalize()]
+
+        try:
+            s.append(f" (I:{len(self.input_files)+len(self.input_datasets)}/O:{len(self.output_datasets)})")
+            s.append(f" {self.path_relative}")
+        except AttributeError:
+            s.append(" (unparsed)")
+
+        return f"<{''.join(s)}>"
+
+    def __str__(self):
+        s = [f"{self._language.capitalize()}:: {str(self.path_relative)}"]
+
+        s.append(f"\tINPUT FILES (found {len(self.input_files)}):")
+        for f in sorted(self.input_files):
+            s.append(f"\t\t{f}")
+
+        s.append(f"\tINPUT DATASETS (found {len(self.input_datasets)}):")
+        for f in sorted(self.input_datasets):
+            s.append(f"\t\t{f}")
+
+        s.append(f"\tOUTPUT DATASETS (found {len(self.output_datasets)}):")
+        for f in sorted(self.output_datasets):
+            s.append(f"\t\t{f}")
+
+        s.append(f"\tProject Root: {self.project_root}")
+        if self.code_path_prefix is not None:
+            s.append(f"\tCode Prefix: {self.code_path_prefix}")
+        if self.data_path_prefix is not None:
+            s.append(f"\tData Prefix: {self.data_path_prefix}")
+        return "\n".join(s)
+
 
 class SAS(CodeParser):
     _language = "sas"
@@ -480,6 +496,7 @@ class Notebook(CodeParser):
     _comment_end = '\\\\n",?'
     _comment_start_regex = True
     _comment_end_regex = True
+
 
 class StataNotebook(CodeParser):
     _language = "statanotebook"
@@ -505,6 +522,7 @@ class Latex(CodeParser):
 
 class Manual(CodeParser):
     """Manual downloader is used to give instructions for a manual step that isn't automated in code."""
+
     _language = "manual"
     _extension = "txt"
     _comment_start = ""
