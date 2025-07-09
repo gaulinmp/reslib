@@ -29,17 +29,17 @@ import logging
 from io import StringIO
 
 # Local logger
-__logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 # 3rd party package imports
 try:
     import networkx as nx
 except ModuleNotFoundError:
-    __logger.warning("NetworkX library not found, DAG functionality unavailable.")
+    _logger.warning("NetworkX library not found, DAG functionality unavailable.")
 try:
     from graphviz import Source
 except ModuleNotFoundError:
-    __logger.warning("Graphviz library not found, DAG plotting unavailable.")
+    _logger.warning("Graphviz library not found, DAG plotting unavailable.")
 
 # project imports
 from reslib.automate import cleanpath as _clnpth
@@ -170,11 +170,11 @@ class DependencyScanner:
         if self.code_path_prefix is not None:
             start_dir = _pthjoin(start_dir, self.code_path_prefix)
 
-        __logger.debug(f"Scanner.scan:: Starting to scan over: {start_dir}")
+        _logger.debug(f"Scanner.scan:: Starting to scan over: {start_dir}")
         for _dir, _, _files in os.walk(start_dir):
             # Ignore if the ignore_folders are anywhere in the path
             if any(x in _dir for x in self._ignore_folders):
-                __logger.debug("Skipping directory: {}".format(_dir))
+                _logger.debug("Skipping directory: {}".format(_dir))
                 continue
 
             for _file in _files:
@@ -184,7 +184,7 @@ class DependencyScanner:
                         continue
 
                     # Create the parser object with this code path
-                    __logger.debug(f"Scanner.scan:: Scanning: {_file}")
+                    _logger.debug(f"Scanner.scan:: Scanning: {_file}")
                     res = parser(
                         path_absolute=path,
                         project_root=self.project_root,
@@ -193,12 +193,12 @@ class DependencyScanner:
                     )
 
                     if res.is_parsed:
-                        __logger.debug(f"Scanner.scan:: Added: {res}")
+                        _logger.debug(f"Scanner.scan:: Added: {res}")
                         self._scanned_code.append(res)
 
                         break  # break out of parser_list, we found our match
                     else:
-                        __logger.debug(f"Scanner.scan:: Failed to parse: {path} with {parser._input_dataset_comment_regex}")
+                        _logger.debug(f"Scanner.scan:: Failed to parse: {path} with {parser._input_dataset_comment_regex}")
 
         return self._scanned_code
 
@@ -301,6 +301,6 @@ class DependencyScanner:
         try:
             Source(dot).render(filepath, format=ext, cleanup=True)
         except NameError as e:
-            __logger.error("Graphviz library not found, DAG plotting unavailable.")
+            _logger.error("Graphviz library not found, DAG plotting unavailable.")
 
         return dot

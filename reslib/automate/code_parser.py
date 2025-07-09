@@ -77,10 +77,10 @@ class CodeParserMetaclass(type):
         # (a failure to compile re above defaults to this too)
         if f_regex is None:
             try:
-                f_regex = re.compile("\.{}$".format(re.escape(lastattr("_extension"))), re.I)
+                f_regex = re.compile(r"\.{}$".format(re.escape(lastattr("_extension"))), re.I)
             except (TypeError, re.error) as e:
                 # Accept anything with an extension
-                f_regex = re.compile("\.[^.]*$")
+                f_regex = re.compile(r"\.[^.]*$")
 
         new_class._file_match_regex = f_regex
 
@@ -476,7 +476,7 @@ class Stata(CodeParser):
 class Notebook(CodeParser):
     _language = "notebook"
     _extension = "ipynb"
-    _comment_start = '"\s*#'
+    _comment_start = r'"\s*#'
     _comment_end = '\\\\n",?'
     _comment_start_regex = True
     _comment_end_regex = True
