@@ -5,8 +5,8 @@
 __title__ = "reslib"
 __description__ = "Research Library"
 __url__ = "http://gaulinmp.github.io/reslib"
-__version__ = "0.0.3"
-__build__ = 0x000003
+__version__ = "0.0.4"
+__build__ = 0x000004
 __author__ = "Maclean Gaulin"
 __author_email__ = "gaulinmp@gmail.com"
 __license__ = "MIT"

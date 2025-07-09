@@ -18,7 +18,7 @@ import numpy as __np
 # current module imports
 
 # Local logger
-__logger = __logging.getLogger(__name__)
+_logger = __logging.getLogger(__name__)
 
 def write_stata_file(df: "DataFrame", filepath: str, **write_kwargs) -> str:
     """
@@ -36,22 +36,22 @@ def write_stata_file(df: "DataFrame", filepath: str, **write_kwargs) -> str:
     df=df.copy()
     for c in df.select_dtypes(include=['object', 'bool']).columns:
         if not (set(df[c].unique()) - {True, False}):
-            __logger.info("reslib.data.io.reslib.data.io.write_stata_file: %s is True/False column. Making 0/1.", c)
+            _logger.info("reslib.data.io.reslib.data.io.write_stata_file: %s is True/False column. Making 0/1.", c)
             df[c] = df[c].astype(int)
         elif not (set(df[c].unique()) - {True, False, __np.nan}):
-            __logger.info("reslib.data.io.write_stata_file: %s is True/False/Null column. Making 0/1.", c)
+            _logger.info("reslib.data.io.write_stata_file: %s is True/False/Null column. Making 0/1.", c)
             df[c] = df[c].astype(float)
         elif not (set(df[c].fillna(False).unique()) - {True, False}):
-            __logger.info("reslib.data.io.write_stata_file: %s is True/False/Null filled column. Making 0/1.", c)
+            _logger.info("reslib.data.io.write_stata_file: %s is True/False/Null filled column. Making 0/1.", c)
             df[c] = df[c].astype(float)
         elif not (set(df[c].fillna(False).unique()) - {True, False, __np.nan}):
-            __logger.info("reslib.data.io.write_stata_file: %s is True/False/Null filled column nan. Making 0/1.", c)
+            _logger.info("reslib.data.io.write_stata_file: %s is True/False/Null filled column nan. Making 0/1.", c)
             df[c] = df[c].astype(float)
 
         try:
             max_len = max(df.loc[df[c].notnull(), c].apply(len))
             if max_len > 1023:
-                __logger.warning("Column %s has max string len == %d, dropping", c, max_len)
+                _logger.warning("Column %s has max string len == %d, dropping", c, max_len)
                 del df[c]
         except Exception:
             # len didn't work? Ignore. Probably bigger problems waiting below.
@@ -62,12 +62,12 @@ def write_stata_file(df: "DataFrame", filepath: str, **write_kwargs) -> str:
     for c in df.select_dtypes(include='object').columns:
         try:
             df[c].str.encode('latin-1')
-            __logger.info("write_stata_file: %s is a string column, filling missing with ''", c)
+            _logger.info("write_stata_file: %s is a string column, filling missing with ''", c)
             df[c] = df[c].fillna('')
         except AttributeError:
             pass
         except UnicodeEncodeError:
-            __logger.warning("write_stata_file: %s has non latin-1 encodable characters", c)
+            _logger.warning("write_stata_file: %s has non latin-1 encodable characters", c)
             df[c] = df[c].str.encode('latin-1', errors='ignore').str.decode('latin-1', errors='ignore').fillna('')
 
     if "write_index" not in write_kwargs:

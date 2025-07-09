@@ -32,7 +32,7 @@ from src import globals as GLOB
 
 
 # Local logger
-__logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class wrds_connection(object):
@@ -72,7 +72,7 @@ class wrds_connection(object):
             # Wrap in exception so engine disposes even if connection close fails
             self.connection.close()
         except Exception as e:
-            __logger.error(f"wrds_connection connection.close() error: {e}")
+            _logger.error(f"wrds_connection connection.close() error: {e}")
         self.engine.dispose()
         self.engine = None
 
@@ -86,5 +86,5 @@ class wrds_connection(object):
             else:
                 return pd.concat(df)
         except DBAPIError as e:
-            __logger.error(f"wrds_connection read_sql error: {e}")
+            _logger.error(f"wrds_connection read_sql error: {e}")
             raise
