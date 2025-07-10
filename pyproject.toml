@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reslib"
+version = "0.0.4"
+description = "Research Library"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Maclean Gaulin", email = "gaulinmp@gmail.com"}
+]
+keywords = ["academic research", "data pipelines"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Topic :: Office/Business :: Financial :: Accounting",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "pandas",
+    "graphviz",
+    "networkx",
+    "pydot",
+]
+
+[project.urls]
+Documentation = "http://gaulinmp.github.io/reslib"
+Source = "https://github.com/gaulinmp/reslib"
+
+[project.optional-dependencies]
+dev = [
+    "beautifulsoup4",
+    "tqdm",
+    "sphinx",
+    "sphinx-rtd-theme",
+    "pytest>=6.0.0",
+    "pytest-cov",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["reslib*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/test_dag"]

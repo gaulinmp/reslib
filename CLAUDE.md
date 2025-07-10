@@ -15,8 +15,7 @@ ResLib (Research Library) is a Python library for facilitating academic research
 ### Package Installation
 ```bash
 pip install -e .                    # Install in development mode
-pip install -r requirements.txt     # Install basic dependencies
-pip install -r requirements.dev.txt # Install development dependencies
+pip install -e .[dev]               # Install with development dependencies
 ```
 
 ### Documentation
