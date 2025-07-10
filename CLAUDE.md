@@ -37,7 +37,7 @@ doit list                          # List available tasks
 
 ### Core Modules
 
-#### `reslib.automate`
+#### `reslib.dag`
 - **Purpose**: Dependency tracking and pipeline automation
 - **Key Components**:
   - `DependencyScanner`: Scans code for INPUT/OUTPUT comments to build dependency graphs

@@ -40,7 +40,7 @@ Assume the following three files exist in the ~/projects/example folder:
 Then the following would create a graph output at ``pipeline.png``::
 
 ```python
-    from reslib.automate import DependencyScanner, SAS, Stata
+    from reslib.dag import DependencyScanner, SAS, Stata
 
     # Just scan for SAS and Stata code, located in the code directory.
     ds = DependencyScanner(project_root='~/projects/example/',

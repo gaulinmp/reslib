@@ -1,4 +1,4 @@
-reslib.automate package
+reslib.dag package
 =======================
 
 Subpackages
@@ -6,24 +6,24 @@ Subpackages
 
 .. toctree::
 
-   reslib.automate.code_parser
-   reslib.automate.scanner
+   reslib.dag.code_parser
+   reslib.dag.scanner
 
 Submodules
 ----------
 
-reslib.automate.code_parser module
+reslib.dag.code_parser module
 ---------------------------
 
-.. automodule:: reslib.automate.code_parser
+.. automodule:: reslib.dag.code_parser
    :members:
    :undoc-members:
    :show-inheritance:
 
-reslib.automate.scanner module
+reslib.dag.scanner module
 ---------------------------
 
-.. automodule:: reslib.automate.scanner
+.. automodule:: reslib.dag.scanner
    :members:
    :undoc-members:
    :show-inheritance:
@@ -32,7 +32,7 @@ reslib.automate.scanner module
 Module contents
 ---------------
 
-.. automodule:: reslib.automate
+.. automodule:: reslib.dag
    :members:
    :undoc-members:
    :show-inheritance:

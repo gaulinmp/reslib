@@ -5,42 +5,47 @@
 reslib.automate
 ********************************
 
-This package facilitates using doit (pydoit.org) to automate data pipelines.
+DEPRECATED: This module has been renamed to reslib.dag.
+
+Please update your imports:
+    from reslib.automate import ... -> from reslib.dag import ...
+
+This backwards compatibility shim will be removed in a future version.
 
 :copyright: (c) 2025 by Maclean Gaulin.
 :license: MIT, see LICENSE for more details.
 """
-# Stdlib imports
-import os as _os
-import re as _re
-# import sys
-# import inspect
-# import pkgutil
 
-# Third party imports
-# import pandas as pd
+import warnings
 
-# from doit.task import Task
-# from doit.dependency import UptodateCalculator
-# from doit.cmd_base import ModuleTaskLoader, NamespaceTaskLoader
-# from doit.doit_cmd import DoitMain
+# Issue deprecation warning
+warnings.warn(
+    "The reslib.automate module has been renamed to reslib.dag. "
+    "Please update your imports: 'from reslib.automate import ...' -> 'from reslib.dag import ...'. "
+    "This backwards compatibility shim will be removed in a future version.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
-# Library imports
-# from reslib.config import Config
+# Import everything from the new dag module for backwards compatibility
+from reslib.dag import *
+from reslib.dag import cleanpath, pathjoin
+from reslib.dag.code_parser import (
+    CodeParser, SAS, Stata, Notebook, Python, Manual, Latex, StataNotebook
+)
+from reslib.dag.scanner import DependencyScanner
 
-
-def cleanpath(path_to_clean, re_pathsep=_re.compile(r"[\\]+"), re_dotstart=_re.compile(r"^./|/$")):
-    """Clean a path by replacing ``\\\\`` with ``/``, and removing beginning ``./`` and trailing ``/``"""
-    if path_to_clean is None:
-        return None
-    return re_dotstart.sub("", re_pathsep.sub("/", str(path_to_clean))).strip()
-
-
-def pathjoin(*paths):
-    """Join, normalize, and clean a list of paths, allowing for ``None``s (filtered out)"""
-    return cleanpath(_os.path.normpath(_os.path.join(*filter(None, paths))))
-
-
-# These have to go after cleanpath/pathjoin, because scanner/code_parser use both
-from reslib.automate.code_parser import (SAS, Stata, Notebook, Python, Manual, Latex, StataNotebook)
-from reslib.automate.scanner import DependencyScanner
+# Re-export all public APIs for backwards compatibility
+__all__ = [
+    'cleanpath',
+    'pathjoin', 
+    'CodeParser',
+    'SAS',
+    'Stata', 
+    'Notebook',
+    'Python',
+    'Manual',
+    'Latex',
+    'StataNotebook',
+    'DependencyScanner'
+]

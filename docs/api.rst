@@ -34,9 +34,9 @@ Automate
 .. toctree::
    :maxdepth: 2
 
-   api/reslib.automate
-   api/reslib.automate.scanner
-   api/reslib.automate.code_parser
+   api/reslib.dag
+   api/reslib.dag.scanner
+   api/reslib.dag.code_parser
 
 
 

@@ -6,7 +6,7 @@ Subpackages
 
 .. toctree::
 
-   reslib.automate
+   reslib.dag
    reslib.data
    reslib.processing
 

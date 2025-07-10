@@ -136,7 +136,11 @@ class Config:
     dictionary objects as well as attributes.
     """
 
-    __borg_data = {}  # http://code.activestate.com/recipes/66531/
+    # https://web.archive.org/web/20230208151625/https://code.activestate.com/recipes/66531/
+    # Singleton Borg pattern allows for multiple instances of the Config object pointing to
+    # the same data, so updates in one instance are reflected in all instances.
+    __borg_data = {}
+
     __is_initialized = False
 
     def __init__(self, config_name=None, config_path=None, **kwargs):
@@ -280,11 +284,7 @@ class Config:
     def _populate_from_file(self, config_path=None, silent=False, **kwargs):
         """
         Populate the Config from a python or json file, based on extension.
-        Only includes keys which are CAPITALIZED.
-
-        NOTE: A python config file is ``eval``-ed, so this is potentially an
-        attack vector. Please don't load a python config file you aren't
-        completely comfortable with.
+        Only loads keys which are CAPITALIZED.
 
         Args:
             config_path: Full path of the config file. Default:
@@ -310,10 +310,6 @@ class Config:
     def _populate_from_dict(self, config_dict):
         """
         Populate the Config from a dictionary.
-
-        NOTE: A python config file is ``eval``-ed, so this is potentially an
-        attack vector. Please don't load a python config file you aren't
-        completely comfortable with.
 
         Args:
             config_path: Full path of the config file. Default:
